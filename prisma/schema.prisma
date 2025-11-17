@@ -1,0 +1,215 @@
+// ============================================================
+//  PRISMA SCHEMA - MindCare SaaS 2025
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+//  USER
+// ============================================================
+
+model User {
+  id        String  @id @default(uuid())
+  nome      String
+  email     String  @unique
+  senha     String
+  cpf       String  @unique
+  telefone  String?
+  endereco  String?
+  tipo      TipoUsuario
+  especialidade String?
+  bio       String?
+  cidade    String?
+
+  // RELAÇÕES — CONSULTAS
+  consultasComoProfissional Consulta[] @relation("ConsultasProfissional")
+  consultasComoCliente      Consulta[] @relation("ConsultasCliente")
+
+  // RELAÇÕES — HORÁRIOS
+  horariosDisponiveis Horario[] @relation("UserHorarios")
+
+  // RELAÇÕES — CALENDÁRIO PROFISSIONAL
+  calendarios CalendarioProfissional[] @relation("UserCalendarios")
+
+  // RELAÇÕES — PRESCRIÇÕES
+  prescricoesFeitas     Prescricao[] @relation("PrescricaoProfissional")
+  prescricoesRecebidas  Prescricao[] @relation("PrescricaoPaciente")
+
+  criadoEm DateTime @default(now())
+}
+
+enum TipoUsuario {
+  CLIENTE
+  PROFISSIONAL
+  ADMIN
+}
+
+// ============================================================
+//  CLÍNICA
+// ============================================================
+
+model Clinica {
+  id       String  @id @default(uuid())
+  nome     String
+  endereco String?
+  telefone String?
+
+  consultas Consulta[]
+
+  criadoEm DateTime @default(now())
+}
+
+// ============================================================
+//  HORÁRIO DISPONÍVEL
+// ============================================================
+
+model Horario {
+  id         String   @id @default(uuid())
+  dataHora   DateTime
+  disponivel Boolean  @default(true)
+  criadoEm   DateTime @default(now())
+
+  profissionalId String
+  profissional   User   @relation("UserHorarios", fields: [profissionalId], references: [id])
+
+  consulta Consulta? @relation("HorarioConsulta")
+
+  @@index([profissionalId, dataHora], map: "idx_horario_prof_data")
+  @@index([dataHora], map: "idx_horario_data")
+}
+
+// ============================================================
+//  CONSULTA
+// ============================================================
+
+model Consulta {
+  id             String  @id @default(uuid())
+  horarioId      String  @unique
+  profissionalId String
+  clienteId      String?
+  clinicaId      String?
+
+  dataHora     DateTime       @map("data")
+  status       StatusConsulta @default(AGENDADA)
+  canceladaPor Cancelador?
+  motivoCancel String?
+  criadoEm     DateTime       @default(now())
+
+  // Relações
+  horario      Horario  @relation("HorarioConsulta", fields: [horarioId], references: [id])
+  profissional User     @relation("ConsultasProfissional", fields: [profissionalId], references: [id])
+  cliente      User?    @relation("ConsultasCliente", fields: [clienteId], references: [id])
+  clinica      Clinica? @relation(fields: [clinicaId], references: [id])
+
+  pagamentos  Pagamento[]
+  prontuarios Prontuario[]
+  avaliacoes  Avaliacao[]
+
+  prescricoes Prescricao[] @relation("ConsultaPrescricoes")
+
+  @@index([profissionalId, clienteId], map: "idx_consulta_prof_cliente")
+}
+
+enum StatusConsulta {
+  AGENDADA
+  CANCELADA
+  CONCLUIDA
+}
+
+enum Cancelador {
+  CLIENTE
+  PROFISSIONAL
+  SISTEMA
+}
+
+// ============================================================
+//  PAGAMENTO
+// ============================================================
+
+model Pagamento {
+  id       String   @id @default(uuid())
+  valor    Float
+  metodo   String
+  status   String
+  criadoEm DateTime @default(now())
+
+  consultaId String
+  consulta   Consulta @relation(fields: [consultaId], references: [id])
+}
+
+// ============================================================
+//  PRONTUÁRIO
+// ============================================================
+
+model Prontuario {
+  id        String   @id @default(uuid())
+  descricao String
+  criadoEm  DateTime @default(now())
+
+  consultaId String
+  consulta   Consulta @relation(fields: [consultaId], references: [id])
+}
+
+// ============================================================
+//  AVALIAÇÃO
+// ============================================================
+
+model Avaliacao {
+  id         String   @id @default(uuid())
+  nota       Int
+  comentario String?
+  criadoEm   DateTime @default(now())
+
+  consultaId String
+  consulta   Consulta @relation(fields: [consultaId], references: [id])
+}
+
+// ============================================================
+//  PRESCRIÇÃO
+// ============================================================
+
+model Prescricao {
+  id             String   @id @default(uuid())
+
+  // — PROFISSIONAL —
+  profissional        User   @relation("PrescricaoProfissional", fields: [profissionalId], references: [id])
+  profissionalId      String
+
+  // — PACIENTE —
+  paciente            User   @relation("PrescricaoPaciente", fields: [pacienteId], references: [id])
+  pacienteId          String
+
+  // — CONSULTA —
+  consultaId      String?
+  consulta        Consulta? @relation("ConsultaPrescricoes", fields: [consultaId], references: [id])
+
+  tipo                String
+  conteudo            String
+
+  criadoEm            DateTime @default(now())
+}
+
+// ============================================================
+//  CALENDÁRIO PROFISSIONAL
+// ============================================================
+
+model CalendarioProfissional {
+  id             String @id @default(uuid())
+  profissionalId String
+
+  profissional   User @relation("UserCalendarios", fields: [profissionalId], references: [id])
+
+  dataHora   DateTime
+  disponivel Boolean  @default(true)
+  observacao String?
+  criadoEm   DateTime @default(now())
+
+  @@unique([profissionalId, dataHora], name: "uk_prof_datahora")
+}

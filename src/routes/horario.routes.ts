@@ -1,0 +1,43 @@
+import { Router } from "express";
+import { authMiddleware } from "../middleware/authMiddleware";
+import { allowRoles } from "../middleware/roleMiddleware";
+import {
+  listarHorariosPorNome,
+  criarHorarioPorNome,
+  atualizarHorarioPorNome,
+  deletarHorarioPorNome,
+} from "../controllers/horario.controller";
+
+const router = Router();
+
+// CLIENTE e PROFISSIONAL podem listar horários de um profissional por nome
+router.get(
+  "/nome/:userNome",
+  authMiddleware,
+  allowRoles("CLIENTE", "PROFISSIONAL"),
+  listarHorariosPorNome
+);
+
+// As três de baixo são opcionais — só use se quiser manipular por nome
+router.post(
+  "/nome/:userNome",
+  authMiddleware,
+  allowRoles("PROFISSIONAL"),
+  criarHorarioPorNome
+);
+
+router.put(
+  "/nome/:userNome",
+  authMiddleware,
+  allowRoles("PROFISSIONAL"),
+  atualizarHorarioPorNome
+);
+
+router.delete(
+  "/nome/:userNome",
+  authMiddleware,
+  allowRoles("PROFISSIONAL"),
+  deletarHorarioPorNome
+);
+
+export default router;
