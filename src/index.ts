@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 
 import { requestLogger } from "./middleware/requestLogger";
 
+// Rotas
 import userRoutes from "./routes/user.routes";
 import clinicaRoutes from "./routes/clinica.routes";
 import consultaRoutes from "./routes/consulta.routes";
@@ -23,18 +24,26 @@ import lgpdRoutes from "./routes/lgpd.routes";
 dotenv.config();
 const app = express();
 
-// ======================================================
-// CORS — backend em 8080, frontend em 3000
-// ======================================================
-const ALLOWED_ORIGIN = "http://localhost:3000";
+/* ============================================================
+   🔥 CORS PROFISSIONAL PARA PRODUÇÃO
+   ============================================================ */
 
+// ORIGENS PERMITIDAS
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+
+  // Frontend Vercel
+  "https://mind-care-steel.vercel.app",
+
+  // Backend Render acessado direto pelo navegador
+  "https://backend-next-het9.onrender.com",
 ];
 
+// Middleware personalizado para permitir ORIGEM DINÂMICA
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   }
@@ -47,24 +56,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Também permite fallback do CORS
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-// (opcional, mas não atrapalha – deixa também)
-app.use(
-  cors({
-    origin: ALLOWED_ORIGIN,
-    credentials: true,
-  })
-);
+/* ============================================================
+   🔥 PARSER + LOGGER
+   ============================================================ */
 
-// ======================================================
-// BODY PARSER + LOGGER
-// ======================================================
 app.use(express.json());
 app.use(requestLogger);
 
-// ======================================================
-// ROTAS
-// ======================================================
+/* ============================================================
+   🔥 ROTAS
+   ============================================================ */
+
 app.use("/api/users", userRoutes);
 app.use("/api/clinicas", clinicaRoutes);
 app.use("/api/consultas", consultaRoutes);
@@ -80,12 +85,16 @@ app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
 
-// 404
+/* ============================================================
+   🔥 404
+   ============================================================ */
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "Rota não encontrada" });
 });
 
-// ERRO GLOBAL
+/* ============================================================
+   🔥 HANDLER GLOBAL DE ERROS
+   ============================================================ */
 app.use(
   (err: any, req: Request, res: Response, next: NextFunction) => {
     console.error("❌ ERRO INTERNO:", err);
@@ -93,7 +102,11 @@ app.use(
   }
 );
 
+/* ============================================================
+   🔥 START SERVER
+   ============================================================ */
 const PORT = process.env.PORT || 8080;
+
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
