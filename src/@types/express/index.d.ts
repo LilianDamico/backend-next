@@ -1,12 +1,18 @@
-declare namespace Express {
-  export interface UserPayload {
-    id: string;
-    nome: string;
-    email: string;
-    tipo: string;
-  }
+import "express";
 
-  export interface Request {
-    user?: UserPayload;
+declare global {
+  namespace Express {
+    interface UserPayload {
+      id: string;
+      email: string;
+      cpf: string;
+      tipo: "ADMIN" | "CLIENTE" | "PROFISSIONAL" | "CLINICA"; // roles oficiais
+    }
+
+    interface Request {
+      user?: UserPayload;
+    }
   }
 }
+
+export {};
