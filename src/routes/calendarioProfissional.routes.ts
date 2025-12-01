@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/authMiddleware";
+import { autenticarJWT } from "../middleware/authMiddleware";
 
 import {
   calendarioMe,
@@ -11,10 +11,10 @@ import {
 
 const router = Router();
 
-router.get("/me", authMiddleware, calendarioMe);
-router.post("/", authMiddleware, calendarioCriar);
-router.post("/gerar-dia", authMiddleware, calendarioGerarDia);
-router.put("/:id", authMiddleware, calendarioAtualizar);
-router.delete("/:id", authMiddleware, calendarioExcluir);
+router.get("/me", autenticarJWT, calendarioMe);
+router.post("/", autenticarJWT, calendarioCriar);
+router.post("/gerar-dia", autenticarJWT, calendarioGerarDia);
+router.put("/:id", autenticarJWT, calendarioAtualizar);
+router.delete("/:id", autenticarJWT, calendarioExcluir);
 
 export default router;

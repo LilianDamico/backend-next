@@ -1,244 +1,212 @@
+// ===============================================================
+//  CONTROLLER DE CONSULTAS — MINDCARE 2025
+// ===============================================================
+
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { differenceInHours } from "date-fns";
 
-// ============================================================
-// 🔐 Função auxiliar para extrair usuário do token
-// ============================================================
-function getUserFromToken(req: Request): { id: string; role?: string; nome?: string } | null {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
+// ===============================================================
+// FUNÇÃO PARA EXTRAIR USUÁRIO DO TOKEN
+// ===============================================================
+interface TokenUser {
+  id: string;
+  tipo?: string;
+  nome?: string;
+}
 
-  const token = authHeader.split(" ")[1];
+function getUserFromToken(req: Request): TokenUser | null {
+  const auth = req.headers.authorization;
+  if (!auth) return null;
+
+  const token = auth.split(" ")[1];
   if (!token) return null;
 
   try {
-    const secret: string = process.env.JWT_SECRET ?? "secret";
-    const decoded = jwt.verify(token as string, secret) as JwtPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET ?? "supersecreto") as JwtPayload;
 
     return {
       id: decoded.id as string,
-      role: decoded.role as string | undefined,
-      nome: decoded.nome as string | undefined,
+      tipo: decoded.tipo as string,
+      nome: decoded.nome as string,
     };
-  } catch (err) {
-    console.error("❌ Erro ao decodificar token:", err);
+  } catch {
     return null;
   }
 }
 
-// ============================================================
-// 🔹 CLIENTE - Criar nova consulta
-// ============================================================
+// ===============================================================
+// 1) AGENDAR CONSULTA (CLIENTE)
+// ===============================================================
+// BODY esperado: { clienteNome, profissionalNome, horarioId }
 export async function criarConsulta(req: Request, res: Response) {
-  const { clienteNome, profissionalNome, dataHora } = req.body;
+  const { clienteNome, profissionalNome, horarioId } = req.body;
 
-  if (!clienteNome || !profissionalNome || !dataHora) {
-    return res.status(400).json({ error: "Campos obrigatórios ausentes." });
-  }
+  if (!clienteNome || !profissionalNome || !horarioId)
+    return res.status(400).json({ error: "Dados obrigatórios ausentes." });
 
   try {
     const cliente = await prisma.user.findFirst({
-      where: { nome: { equals: clienteNome, mode: "insensitive" }, tipo: "CLIENTE" },
+      where: { nome: { equals: clienteNome, mode: "insensitive" }, tipo: "CLIENTE" }
     });
 
     const profissional = await prisma.user.findFirst({
-      where: { nome: { equals: profissionalNome, mode: "insensitive" }, tipo: "PROFISSIONAL" },
+      where: { nome: { equals: profissionalNome, mode: "insensitive" }, tipo: "PROFISSIONAL" }
     });
 
-    if (!cliente || !profissional) {
-      return res.status(404).json({ error: "Cliente ou profissional não encontrado." });
-    }
+    if (!cliente || !profissional)
+      return res.status(404).json({ error: "Cliente ou profissional não localizado." });
 
-    const horario = await prisma.horario.findFirst({
-      where: {
-        profissionalId: profissional.id,
-        dataHora: new Date(dataHora),
-        disponivel: true,
-      },
-    });
+    const horario = await prisma.calendarioProfissional.findUnique({ where: { id: horarioId } });
 
-    if (!horario) {
-      return res.status(400).json({ error: "Horário indisponível." });
-    }
+    if (!horario)
+      return res.status(404).json({ error: "Horário não encontrado." });
+
+    if (!horario.disponivel)
+      return res.status(409).json({ error: "Horário indisponível." });
 
     const consulta = await prisma.consulta.create({
       data: {
-        dataHora: new Date(dataHora),
-        clienteId: cliente.id,
         profissionalId: profissional.id,
-        horarioId: horario.id,
-        status: "AGENDADA",
+        clienteId: cliente.id,
+        horarioId,
+        dataHora: horario.dataHora,
+        status: "AGENDADA"
       },
-      include: {
-        cliente: { select: { nome: true } },
-        profissional: { select: { nome: true, especialidade: true } },
-        horario: { select: { dataHora: true } },
-      },
+      include: { cliente: true, profissional: true, horario: true }
     });
 
-    await prisma.horario.update({
-      where: { id: horario.id },
-      data: { disponivel: false },
+    await prisma.calendarioProfissional.update({
+      where: { id: horarioId },
+      data: { disponivel: false }
     });
 
-    return res.status(201).json({
-      message: "Consulta agendada com sucesso.",
-      consulta,
-    });
-  } catch (error) {
-    console.error("❌ Erro ao criar consulta:", error);
-    return res.status(500).json({ error: "Erro ao agendar consulta." });
+    return res.status(201).json({ message: "Consulta agendada com sucesso!", consulta });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro interno ao criar consulta." });
   }
 }
 
-// ============================================================
-// 🔹 CLIENTE - Listar consultas do cliente logado
-// ============================================================
+// ===============================================================
+// 2) LISTAR CONSULTAS DO CLIENTE (TOKEN)
+// ===============================================================
 export async function listarConsultasDoCliente(req: Request, res: Response) {
   const user = getUserFromToken(req);
-  if (!user || user.role !== "CLIENTE") {
-    return res.status(403).json({ error: "Acesso negado." });
-  }
+  if (!user || user.tipo !== "CLIENTE") return res.status(403).json({ error: "Acesso negado." });
 
   try {
     const consultas = await prisma.consulta.findMany({
       where: { clienteId: user.id },
-      include: {
-        profissional: { select: { nome: true, especialidade: true } },
-        horario: { select: { dataHora: true } },
-      },
-      orderBy: { dataHora: "asc" },
+      include: { profissional: true, horario: true },
+      orderBy: { dataHora: "asc" }
     });
 
     return res.json(consultas);
-  } catch (error) {
-    console.error("❌ Erro ao listar consultas do cliente:", error);
-    return res.status(500).json({ error: "Erro ao carregar consultas." });
+
+  } catch {
+    return res.status(500).json({ error: "Erro ao buscar consultas." });
   }
 }
 
-// ============================================================
-// 🔹 PROFISSIONAL - Listar consultas agendadas com ele
-// ============================================================
+// ===============================================================
+// 3) LISTAR CONSULTAS DO PROFISSIONAL (TOKEN) 🔥
+// ===============================================================
 export async function listarConsultasDoProfissional(req: Request, res: Response) {
   const user = getUserFromToken(req);
-  if (!user || user.role !== "PROFISSIONAL") {
+
+  if (!user || user.tipo !== "PROFISSIONAL")
     return res.status(403).json({ error: "Acesso negado." });
-  }
 
   try {
     const consultas = await prisma.consulta.findMany({
-      where: { profissionalId: user.id },
+      where: { profissionalId: user.id },  // token resolve tudo
       include: {
-        cliente: { select: { nome: true, email: true } },
-        horario: { select: { dataHora: true } },
+        cliente: { select: { nome: true } },
+        horario: true,
       },
-      orderBy: { dataHora: "asc" },
+      orderBy: { dataHora: "asc" }
     });
 
     return res.json(consultas);
-  } catch (error) {
-    console.error("❌ Erro ao listar consultas do profissional:", error);
-    return res.status(500).json({ error: "Erro ao carregar consultas." });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro ao buscar consultas." });
   }
 }
 
-// ============================================================
-// 🔹 CLIENTE - Cancelar consulta
-// ============================================================
+
+// ===============================================================
+// 4) BUSCAR CONSULTAS POR NOME DO CLIENTE
+// ===============================================================
+export async function listarConsultasPorClienteNome(req: Request, res: Response) {
+  const { userNome } = req.params;
+
+  if (!userNome)
+    return res.status(400).json({ error: "Nome do cliente é obrigatório." });
+
+  try {
+    const cliente = await prisma.user.findFirst({
+      where: { nome: { equals: userNome, mode: "insensitive" }, tipo: "CLIENTE" }
+    });
+
+    if (!cliente)
+      return res.status(404).json({ error: "Cliente não encontrado." });
+
+    const consultas = await prisma.consulta.findMany({
+      where: { clienteId: cliente.id },
+      include: { profissional: true, horario: true },
+      orderBy: { dataHora: "asc" }
+    });
+
+    res.json(consultas);
+
+  } catch {
+    res.status(500).json({ error: "Erro ao buscar consultas." });
+  }
+}
+
+// ===============================================================
+// 5) CANCELAR CONSULTA (CLIENTE)
+// ===============================================================
 export async function cancelarConsulta(req: Request, res: Response) {
   const user = getUserFromToken(req);
-  if (!user || user.role !== "CLIENTE") {
+  if (!user || user.tipo !== "CLIENTE")
     return res.status(403).json({ error: "Acesso negado." });
-  }
 
   const { id } = req.params;
 
   try {
     const consulta = await prisma.consulta.findUnique({
       where: { id },
+      include: { horario: true }
     });
 
-    if (!consulta) {
-      return res.status(404).json({ error: "Consulta não encontrada." });
-    }
+    if (!consulta) return res.status(404).json({ error: "Consulta não encontrada." });
+    if (consulta.clienteId !== user.id) return res.status(403).json({ error: "Você não pode cancelar essa consulta." });
 
-    if (!consulta.horarioId) {
-      return res.status(400).json({ error: "Consulta sem horário vinculado." });
-    }
+    const horas = differenceInHours(consulta.dataHora, new Date());
+    if (horas < 24)
+      return res.status(400).json({ error: "Cancelamento permitido somente com 24h de antecedência." });
 
     await prisma.consulta.update({
       where: { id },
-      data: { status: "CANCELADA" },
+      data: { status: "CANCELADA", canceladaPor: "CLIENTE" }
     });
 
-    await prisma.horario.update({
+    await prisma.calendarioProfissional.update({
       where: { id: consulta.horarioId },
-      data: { disponivel: true },
+      data: { disponivel: true }
     });
 
     return res.json({ message: "Consulta cancelada com sucesso." });
-  } catch (error) {
-    console.error("❌ Erro ao cancelar consulta:", error);
-    return res.status(500).json({ error: "Erro ao cancelar consulta." });
-  }
-}
 
-export async function listarConsultasPorClienteNome(req: Request, res: Response) {
-  try {
-    const { userNome } = req.params;
-
-    const user = await prisma.user.findFirst({
-      where: { nome: { equals: userNome, mode: "insensitive" } },
-    });
-
-    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
-
-    const consultas = await prisma.consulta.findMany({
-      where: { clienteId: user.id },
-      include: {
-        profissional: true,
-        clinica: true,
-        horario: true
-      },
-      orderBy: { dataHora: "asc" },
-    });
-
-    return res.json(consultas);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Erro ao buscar consultas" });
-  }
-}
-
-
-export async function listarConsultasPorNomeCliente(req: Request, res: Response) {
-  try {
-    const { userNome } = req.params;
-
-    const cliente = await prisma.user.findFirst({
-      where: { nome: { equals: userNome, mode: "insensitive" } }
-    });
-
-    if (!cliente) {
-      return res.status(404).json({ error: "Cliente não encontrado." });
-    }
-
-    const consultas = await prisma.consulta.findMany({
-      where: { clienteId: cliente.id },
-      include: {
-        profissional: true,
-        clinica: true,
-        horario: true,
-      },
-      orderBy: { dataHora: "asc" },
-    });
-
-    res.json(consultas);
-  } catch (error) {
-    console.error("Erro ao listar consultas por nome do cliente:", error);
-    res.status(500).json({ error: "Erro ao buscar consultas." });
+    return res.status(500).json({ error: "Erro ao cancelar consulta." });
   }
 }
 

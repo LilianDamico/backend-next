@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/authMiddleware";
+import { autenticarJWT } from "../middleware/authMiddleware";
 import { allowRoles } from "../middleware/roleMiddleware";
 import {
   listarHorariosPorNome,
@@ -13,7 +13,7 @@ const router = Router();
 // CLIENTE e PROFISSIONAL podem listar horários de um profissional por nome
 router.get(
   "/nome/:userNome",
-  authMiddleware,
+  autenticarJWT,
   allowRoles("CLIENTE", "PROFISSIONAL"),
   listarHorariosPorNome
 );
@@ -21,21 +21,21 @@ router.get(
 // As três de baixo são opcionais — só use se quiser manipular por nome
 router.post(
   "/nome/:userNome",
-  authMiddleware,
+  autenticarJWT,
   allowRoles("PROFISSIONAL"),
   criarHorarioPorNome
 );
 
 router.put(
   "/nome/:userNome",
-  authMiddleware,
+  autenticarJWT,
   allowRoles("PROFISSIONAL"),
   atualizarHorarioPorNome
 );
 
 router.delete(
   "/nome/:userNome",
-  authMiddleware,
+  autenticarJWT,
   allowRoles("PROFISSIONAL"),
   deletarHorarioPorNome
 );

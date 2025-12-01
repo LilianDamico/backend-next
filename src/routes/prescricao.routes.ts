@@ -1,18 +1,20 @@
 import { Router } from "express";
 import {
-  listarPrescricoesPorUserNome,
   criarPrescricao,
-  atualizarPrescricao,
-  deletarPrescricao
+  listarPrescricoesPorNomePaciente,
+  listarPrescricoesPorNomeProfissional
 } from "../controllers/prescricao.controller";
-import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
 
-// Todas as rotas exigem token
-router.get("/:userNome", authMiddleware, listarPrescricoesPorUserNome);
-router.post("/", authMiddleware, criarPrescricao);
-router.put("/:id", authMiddleware, atualizarPrescricao);
-router.delete("/:id", authMiddleware, deletarPrescricao);
+// Criar nova prescrição
+router.post("/", criarPrescricao);
+
+// Buscar por nome do paciente
+router.get("/paciente/:nome", listarPrescricoesPorNomePaciente);
+
+// Buscar por nome do profissional
+router.get("/profissional/:nome", listarPrescricoesPorNomeProfissional);
 
 export default router;
+

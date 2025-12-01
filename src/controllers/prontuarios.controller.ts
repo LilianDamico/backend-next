@@ -1,53 +1,36 @@
-// src/controllers/prontuario.controller.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-/**
- *  GET /api/prontuarios/nome/:userNome
- *  Retorna todos os prontuários onde o usuário é cliente OU profissional
- */
-export async function listarProntuariosPorUserNome(req: Request, res: Response) {
+export const listarPorUsuario = async (req: Request, res: Response) => {
   try {
-    const { userNome } = req.params;
+    const nome = req.params.nome; // veio na URL
+    if (!nome) return res.status(400).json({ error: "Nome não informado" });
 
-    const user = await prisma.user.findFirst({
-      where: {
-        nome: { equals: userNome, mode: "insensitive" },
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "Usuário não encontrado." });
-    }
-
-    // Buscar prontuários das consultas onde ele é cliente ou profissional
     const prontuarios = await prisma.prontuario.findMany({
       where: {
         consulta: {
           OR: [
-            { clienteId: user.id },
-            { profissionalId: user.id },
-          ],
-        },
+            { cliente: { nome: { contains: nome, mode: "insensitive" } }},
+            { profissional: { nome: { contains: nome, mode: "insensitive" } }}
+          ]
+        }
       },
       include: {
         consulta: {
           include: {
-            profissional: true,
             cliente: true,
-          },
-        },
+            profissional: true,
+          }
+        }
       },
-      orderBy: {
-        criadoEm: "desc",
-      },
+      orderBy: { criadoEm: "desc" }
     });
 
     return res.json(prontuarios);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Erro ao buscar prontuários." });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: "Erro ao buscar prontuários" });
   }
-}
+};

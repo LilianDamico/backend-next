@@ -58,7 +58,7 @@ export async function listarHorariosPorNome(req: Request, res: Response) {
       return res.status(404).json({ error: "Profissional não encontrado." });
     }
 
-    const horarios = await prisma.horario.findMany({
+    const horarios = await prisma.calendarioProfissional.findMany({
       where: {
         profissionalId: profissional.id,
         disponivel: true,

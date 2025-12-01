@@ -70,7 +70,9 @@ export async function calendarioCriar(req: Request, res: Response) {
 export async function calendarioGerarDia(req: Request, res: Response) {
   try {
     const user = req.user as any;
-    const { data, inicio, fim, intervaloMinutos } = req.body;
+    const { data, inicio, fim, intervalo, intervaloMinutos } = req.body;
+
+    const step = intervaloMinutos ?? intervalo ?? 30;
 
     const inicioDate = new Date(`${data}T${inicio}:00`);
     const fimDate = new Date(`${data}T${fim}:00`);
@@ -79,6 +81,7 @@ export async function calendarioGerarDia(req: Request, res: Response) {
     const criados = [];
 
     while (current <= fimDate) {
+
       const existe = await prisma.calendarioProfissional.findFirst({
         where: { profissionalId: user.id, dataHora: current },
       });
@@ -94,7 +97,7 @@ export async function calendarioGerarDia(req: Request, res: Response) {
         criados.push(novo);
       }
 
-      current = new Date(current.getTime() + intervaloMinutos * 60000);
+      current = new Date(current.getTime() + step * 60000);
     }
 
     return res.json({ criados });
@@ -103,6 +106,7 @@ export async function calendarioGerarDia(req: Request, res: Response) {
     return res.status(500).json({ error: "Erro interno." });
   }
 }
+
 
 // ============================================================
 // PUT /api/calendario/:id — EDITAR HORÁRIO

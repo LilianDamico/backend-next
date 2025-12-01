@@ -1,23 +1,19 @@
 import { Router } from "express";
+import { autenticarJWT } from "../middleware/authMiddleware";
 import {
   criarConsulta,
   listarConsultasDoCliente,
   listarConsultasDoProfissional,
-  cancelarConsulta,
-  listarConsultasPorNomeCliente
+  listarConsultasPorClienteNome,
+  cancelarConsulta
 } from "../controllers/consulta.controller";
-import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
 
-// CLIENTE
-router.post("/", authMiddleware, criarConsulta);
-router.get("/cliente/nome/:userNome", authMiddleware, listarConsultasDoCliente);
-router.delete("/:id", authMiddleware, cancelarConsulta);
-router.get("/cliente/nome/:userNome", authMiddleware, listarConsultasPorNomeCliente);
-
-
-// PROFISSIONAL
-router.get("/profissional", authMiddleware, listarConsultasDoProfissional);
+router.post("/", autenticarJWT, criarConsulta);
+router.get("/cliente", autenticarJWT, listarConsultasDoCliente);
+router.get("/profissional", autenticarJWT, listarConsultasDoProfissional);
+router.get("/cliente/nome/:userNome", listarConsultasPorClienteNome); 
+router.patch("/cancelar/:id", autenticarJWT, cancelarConsulta);
 
 export default router;

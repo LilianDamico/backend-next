@@ -114,7 +114,7 @@ export async function listarHorariosDoProfissional(req: Request, res: Response) 
   }
 
   try {
-    const horarios = await prisma.horario.findMany({
+    const horarios = await prisma.calendarioProfissional.findMany({
       where: { profissionalId: user.id },
       orderBy: { dataHora: "asc" },
     });
@@ -138,16 +138,16 @@ export async function criarOuAtualizarHorario(req: Request, res: Response) {
   if (!dataHora) return res.status(400).json({ error: "dataHora é obrigatório" });
 
   try {
-    const existente = await prisma.horario.findFirst({
+    const existente = await prisma.calendarioProfissional.findFirst({
       where: { profissionalId: user.id, dataHora: new Date(dataHora) },
     });
 
     const horario = existente
-      ? await prisma.horario.update({
+      ? await prisma.calendarioProfissional.update({
           where: { id: existente.id },
           data: { disponivel },
         })
-      : await prisma.horario.create({
+      : await prisma.calendarioProfissional.create({
           data: { profissionalId: user.id, dataHora: new Date(dataHora), disponivel },
         });
 
@@ -174,11 +174,46 @@ export async function listarConsultasAgendadas(req: Request, res: Response) {
         cliente: { select: { nome: true, email: true } },
         horario: { select: { dataHora: true } },
       },
-      orderBy: { data: "asc" },
+      orderBy: { dataHora: "asc" },
     });
     return res.json(consultas);
   } catch (error) {
     console.error("Erro listarConsultasAgendadas:", error);
     return res.status(500).json({ error: "Erro ao buscar consultas" });
+  }
+}
+
+
+// ===============================================
+// BUSCAR PROFISSIONAIS POR NOME (CLIENTE usa)
+// GET /api/profissionais/buscar?nome=xxx
+// ===============================================
+export async function buscarProfissionais(req: Request, res: Response) {
+  try {
+    const nome = req.query.nome as string;
+
+    if (!nome || nome.trim().length < 2) {
+      return res.status(400).json({
+        error: "Nome deve ter ao menos 2 caracteres.",
+      });
+    }
+
+    const profissionais = await prisma.user.findMany({
+      where: {
+        tipo: "PROFISSIONAL",
+        nome: { contains: nome, mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        nome: true,
+        especialidade: true,
+        cidade: true,
+      },
+    });
+
+    return res.json(profissionais);
+  } catch (error) {
+    console.error("Erro buscarProfissionais:", error);
+    return res.status(500).json({ error: "Erro interno." });
   }
 }

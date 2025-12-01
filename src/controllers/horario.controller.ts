@@ -1,7 +1,6 @@
 // ============================================================
 // src/controllers/horario.controller.ts
 // CONTROLADOR OFICIAL DE HORÁRIOS (por NOME do profissional)
-// Usado principalmente pelo CLIENTE para ver horários disponíveis
 // ============================================================
 
 import { Request, Response } from "express";
@@ -27,9 +26,7 @@ async function buscarProfissionalPorNome(userNome: string) {
 }
 
 // ============================================================
-// 1) LISTAR HORÁRIOS POR NOME DO PROFISSIONAL  (CLIENTE usa)
-//    GET /api/horarios/nome/:userNome
-//    Retorna SOMENTE horários disponíveis, ordenados por dataHora
+// 1) LISTAR HORÁRIOS POR NOME
 // ============================================================
 
 export async function listarHorariosPorNome(req: Request, res: Response) {
@@ -37,17 +34,17 @@ export async function listarHorariosPorNome(req: Request, res: Response) {
     const userNome = req.params.userNome;
 
     if (!userNome) {
-      return res
-        .status(400)
-        .json({ error: "Nome do profissional é obrigatório." });
+      return res.status(400).json({
+        error: "Nome do profissional é obrigatório.",
+      });
     }
 
     const profissional = await buscarProfissionalPorNome(userNome);
 
     if (!profissional) {
-      return res
-        .status(404)
-        .json({ error: "Profissional não encontrado." });
+      return res.status(404).json({
+        error: "Profissional não encontrado.",
+      });
     }
 
     const horarios = await prisma.calendarioProfissional.findMany({
@@ -58,24 +55,29 @@ export async function listarHorariosPorNome(req: Request, res: Response) {
       orderBy: { dataHora: "asc" },
     });
 
-    // Frontend espera um ARRAY simples
     return res.json(horarios);
   } catch (error) {
     console.error("❌ listarHorariosPorNome:", error);
-    return res.status(500).json({ error: "Erro ao buscar horários." });
+    return res.status(500).json({
+      error: "Erro ao buscar horários.",
+    });
   }
 }
 
 // ============================================================
-// 2) CRIAR HORÁRIO POR NOME — opcional (PROFISSIONAL)
-//    POST /api/horarios/nome/:userNome
-//    body: { dataHora: string, observacao?: string }
-//    -> Usa a mesma tabela CalendarioProfissional
+// 2) CRIAR HORÁRIO POR NOME
 // ============================================================
 
 export async function criarHorarioPorNome(req: Request, res: Response) {
   try {
     const userNome = req.params.userNome;
+
+    if (!userNome) {
+      return res.status(400).json({
+        error: "Nome do profissional é obrigatório.",
+      });
+    }
+
     const { dataHora, observacao } = req.body;
 
     if (!dataHora) {
@@ -85,14 +87,13 @@ export async function criarHorarioPorNome(req: Request, res: Response) {
     const profissional = await buscarProfissionalPorNome(userNome);
 
     if (!profissional) {
-      return res
-        .status(404)
-        .json({ error: "Profissional não encontrado." });
+      return res.status(404).json({
+        error: "Profissional não encontrado.",
+      });
     }
 
     const dt = new Date(dataHora);
 
-    // Evita duplicado para o mesmo profissional/dataHora
     const existente = await prisma.calendarioProfissional.findFirst({
       where: {
         profissionalId: profissional.id,
@@ -101,9 +102,9 @@ export async function criarHorarioPorNome(req: Request, res: Response) {
     });
 
     if (existente) {
-      return res
-        .status(409)
-        .json({ error: "Este horário já está cadastrado." });
+      return res.status(409).json({
+        error: "Este horário já está cadastrado.",
+      });
     }
 
     const criado = await prisma.calendarioProfissional.create({
@@ -118,34 +119,42 @@ export async function criarHorarioPorNome(req: Request, res: Response) {
     return res.status(201).json(criado);
   } catch (error) {
     console.error("❌ criarHorarioPorNome:", error);
-    return res.status(500).json({ error: "Erro ao criar horário." });
+    return res.status(500).json({
+      error: "Erro ao criar horário.",
+    });
   }
 }
 
 // ============================================================
-// 3) ATUALIZAR HORÁRIO POR NOME — opcional (PROFISSIONAL)
-//    PUT /api/horarios/nome/:userNome
-//    body: { horarioId: string, disponivel?: boolean, observacao?: string }
+// 3) ATUALIZAR HORÁRIO POR NOME
 // ============================================================
 
 export async function atualizarHorarioPorNome(req: Request, res: Response) {
   try {
     const userNome = req.params.userNome;
+
+    if (!userNome) {
+      return res.status(400).json({
+        error: "Nome do profissional é obrigatório.",
+      });
+    }
+
     const { horarioId, disponivel, observacao } = req.body;
 
     if (!horarioId) {
-      return res.status(400).json({ error: "horarioId é obrigatório." });
+      return res.status(400).json({
+        error: "horarioId é obrigatório.",
+      });
     }
 
     const profissional = await buscarProfissionalPorNome(userNome);
 
     if (!profissional) {
-      return res
-        .status(404)
-        .json({ error: "Profissional não encontrado." });
+      return res.status(404).json({
+        error: "Profissional não encontrado.",
+      });
     }
 
-    // Garante que o horário pertence a esse profissional
     const slot = await prisma.calendarioProfissional.findFirst({
       where: {
         id: horarioId,
@@ -154,13 +163,14 @@ export async function atualizarHorarioPorNome(req: Request, res: Response) {
     });
 
     if (!slot) {
-      return res.status(404).json({ error: "Horário não encontrado." });
+      return res.status(404).json({
+        error: "Horário não encontrado.",
+      });
     }
 
     const atualizado = await prisma.calendarioProfissional.update({
       where: { id: horarioId },
       data: {
-        // só atualiza o que veio
         ...(typeof disponivel === "boolean" ? { disponivel } : {}),
         ...(observacao !== undefined ? { observacao } : {}),
       },
@@ -169,31 +179,40 @@ export async function atualizarHorarioPorNome(req: Request, res: Response) {
     return res.json(atualizado);
   } catch (error) {
     console.error("❌ atualizarHorarioPorNome:", error);
-    return res.status(500).json({ error: "Erro ao atualizar horário." });
+    return res.status(500).json({
+      error: "Erro ao atualizar horário.",
+    });
   }
 }
 
 // ============================================================
-// 4) DELETAR HORÁRIO POR NOME — opcional (PROFISSIONAL)
-//    DELETE /api/horarios/nome/:userNome
-//    body: { horarioId: string }
+// 4) DELETAR HORÁRIO POR NOME
 // ============================================================
 
 export async function deletarHorarioPorNome(req: Request, res: Response) {
   try {
     const userNome = req.params.userNome;
+
+    if (!userNome) {
+      return res.status(400).json({
+        error: "Nome do profissional é obrigatório.",
+      });
+    }
+
     const { horarioId } = req.body;
 
     if (!horarioId) {
-      return res.status(400).json({ error: "horarioId é obrigatório." });
+      return res.status(400).json({
+        error: "horarioId é obrigatório.",
+      });
     }
 
     const profissional = await buscarProfissionalPorNome(userNome);
 
     if (!profissional) {
-      return res
-        .status(404)
-        .json({ error: "Profissional não encontrado." });
+      return res.status(404).json({
+        error: "Profissional não encontrado.",
+      });
     }
 
     const slot = await prisma.calendarioProfissional.findFirst({
@@ -204,7 +223,9 @@ export async function deletarHorarioPorNome(req: Request, res: Response) {
     });
 
     if (!slot) {
-      return res.status(404).json({ error: "Horário não encontrado." });
+      return res.status(404).json({
+        error: "Horário não encontrado.",
+      });
     }
 
     await prisma.calendarioProfissional.delete({
@@ -214,6 +235,8 @@ export async function deletarHorarioPorNome(req: Request, res: Response) {
     return res.json({ message: "Horário removido." });
   } catch (error) {
     console.error("❌ deletarHorarioPorNome:", error);
-    return res.status(500).json({ error: "Erro ao remover horário." });
+    return res.status(500).json({
+      error: "Erro ao remover horário.",
+    });
   }
 }

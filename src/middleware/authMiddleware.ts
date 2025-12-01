@@ -10,7 +10,7 @@ interface TokenPayload extends JwtPayload {
   tipo?: string;
 }
 
-export const authMiddleware = (
+export const autenticarJWT = (
   req: Request,
   res: Response,
   next: NextFunction

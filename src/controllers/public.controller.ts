@@ -26,7 +26,7 @@ export async function listarHorariosPorNome(req: Request, res: Response) {
     }
 
     // Busca horários disponíveis
-    const horarios = await prisma.horario.findMany({
+    const horarios = await prisma.calendarioProfissional.findMany({
       where: { profissionalId: profissional.id, disponivel: true },
       orderBy: { dataHora: "asc" },
     });
