@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { autenticarJWT } from "../middleware/authMiddleware";
-import { allowRoles } from "../middleware/roleMiddleware";
+import { permitirRoles } from "../middleware/roleMiddleware";
 import {
   listarHorariosPorNome,
   criarHorarioPorNome,
@@ -14,7 +14,7 @@ const router = Router();
 router.get(
   "/nome/:userNome",
   autenticarJWT,
-  allowRoles("CLIENTE", "PROFISSIONAL"),
+  permitirRoles("CLIENTE", "PROFISSIONAL"),
   listarHorariosPorNome
 );
 
@@ -22,21 +22,21 @@ router.get(
 router.post(
   "/nome/:userNome",
   autenticarJWT,
-  allowRoles("PROFISSIONAL"),
+  permitirRoles("PROFISSIONAL"),
   criarHorarioPorNome
 );
 
 router.put(
   "/nome/:userNome",
   autenticarJWT,
-  allowRoles("PROFISSIONAL"),
+  permitirRoles("PROFISSIONAL"),
   atualizarHorarioPorNome
 );
 
 router.delete(
   "/nome/:userNome",
   autenticarJWT,
-  allowRoles("PROFISSIONAL"),
+  permitirRoles("PROFISSIONAL"),
   deletarHorarioPorNome
 );
 

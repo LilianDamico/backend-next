@@ -1,54 +1,44 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import type { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecreto"; // 🔐
+const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
-export interface TokenPayload extends JwtPayload {
+interface TokenPayload {
   id: string;
   email: string;
   cpf: string;
   tipo: "ADMIN" | "CLIENTE" | "PROFISSIONAL" | "CLINICA";
+  roles?: string[];
 }
 
-/**
- * Middleware padrão — valida token
- */
-export const autenticarJWT = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Response | void => {
-  const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ error: "Token não fornecido" });
+export function autenticarJWT(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
 
-  const token = header.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Token malformatado" });
+  if (!authHeader) {
+    res.status(401).json({ error: "Token não fornecido." });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    res.status(401).json({ error: "Token malformado." });
+    return;
+  }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    req.user = decoded;
-    return next(); // OK 🔥
-  } catch {
-    return res.status(403).json({ error: "Token inválido ou expirado" });
+
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      cpf: decoded.cpf,
+      tipo: decoded.tipo,
+      roles: decoded.roles ?? [],
+    };
+
+    next();
+  } catch (err) {
+    res.status(403).json({ error: "Token inválido ou expirado." });
   }
-};
-
-
-/**
- * Middleware RBAC — exige roles específicas
- */
-export const roleRequired = (...roles: TokenPayload["tipo"][]) => {
-  return (req: Request, res: Response, next: NextFunction): Response | void => {
-    if (!req.user) return res.status(401).json({ error: "Token ausente" });
-
-    // ❗ Se a role NÃO for autorizada → bloqueia
-    if (!roles.includes(req.user.tipo)) {
-      return res.status(403).json({
-        error: `Acesso negado — necessário: ${roles.join(", ")}`,
-        recebido: req.user.tipo
-      });
-    }
-
-    return next(); // final feliz 😎
-  };
-};
+}

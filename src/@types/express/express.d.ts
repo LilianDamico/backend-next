@@ -6,7 +6,8 @@ declare global {
       id: string;
       email: string;
       cpf: string;
-      tipo: "ADMIN" | "CLIENTE" | "PROFISSIONAL" | "CLINICA"; // roles oficiais
+      tipo: "ADMIN" | "CLIENTE" | "PROFISSIONAL" | "CLINICA";
+      roles?: string[]; // suporte extra para RBAC avançado
     }
 
     interface Request {
