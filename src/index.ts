@@ -25,22 +25,25 @@ dotenv.config();
 const app = express();
 
 /* ============================================================
-   🔥 CORS PROFISSIONAL PARA PRODUÇÃO
+   ✅ CORS PROFISSIONAL e correto
    ============================================================ */
 
-// ORIGENS PERMITIDAS
+// Domínios reais permitidos
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 
-  // Frontend Vercel
-  "https://mind-care-steel.vercel.app",
+  // Frontend Vercel REAL (ajuste AQUI)
+  "https://mind-care-4d54jqcgqg-lilians-projects-162305f6.vercel.app",
 
-  // Backend Render acessado direto pelo navegador
+  // Backend Render (caso teste no navegador)
   "https://backend-next-het9.onrender.com",
+
+  // IA FastAPI (opcional)
+  "https://mindcare-ai-ylk7.onrender.com",
 ];
 
-// Middleware personalizado para permitir ORIGEM DINÂMICA
+// Middleware 100% seguro
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
@@ -49,27 +52,29 @@ app.use((req, res, next) => {
   }
 
   res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, Content-Type, Accept, Authorization"
+  );
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 
   if (req.method === "OPTIONS") return res.sendStatus(200);
+
   next();
 });
 
-// Também permite fallback do CORS
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+// ❗ REMOVIDO O CORS DUPLICADO → EVITA CONFLITO
+// app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 /* ============================================================
-   🔥 PARSER + LOGGER
+   BODY PARSER + LOGGER
    ============================================================ */
-
 app.use(express.json());
 app.use(requestLogger);
 
 /* ============================================================
-   🔥 ROTAS
+   ROTAS
    ============================================================ */
-
 app.use("/api/users", userRoutes);
 app.use("/api/clinicas", clinicaRoutes);
 app.use("/api/consultas", consultaRoutes);
@@ -86,27 +91,24 @@ app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
 
 /* ============================================================
-   🔥 404
+   404
    ============================================================ */
 app.use((req: Request, res: Response) => {
   res.status(404).json({ message: "Rota não encontrada" });
 });
 
 /* ============================================================
-   🔥 HANDLER GLOBAL DE ERROS
+   GLOBAL ERROR HANDLER
    ============================================================ */
-app.use(
-  (err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error("❌ ERRO INTERNO:", err);
-    res.status(500).json({ error: "Erro interno no servidor." });
-  }
-);
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("❌ ERRO INTERNO:", err);
+  res.status(500).json({ error: "Erro interno no servidor." });
+});
 
 /* ============================================================
-   🔥 START SERVER
+   START SERVER
    ============================================================ */
 const PORT = process.env.PORT || 8080;
-
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
