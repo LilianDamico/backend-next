@@ -20,12 +20,14 @@ import publicRoutes from "./routes/public.routes";
 import calendarioProfissionalRoutes from "./routes/calendarioProfissional.routes";
 import horarios from "./routes/horario.routes";
 import lgpdRoutes from "./routes/lgpd.routes";
+import triagemRoutes from "./routes/triagem.routes";
 
 dotenv.config();
+
 const app = express();
 
 /* ============================================================
-   ✅ CORS PROFISSIONAL e correto
+   ✅ CORS 
    ============================================================ */
 
 // Domínios reais permitidos
@@ -63,12 +65,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ❗ REMOVIDO O CORS DUPLICADO → EVITA CONFLITO
-// app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-/* ============================================================
-   BODY PARSER + LOGGER
-   ============================================================ */
 app.use(express.json());
 app.use(requestLogger);
 
@@ -89,6 +86,7 @@ app.use("/public", publicRoutes);
 app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
+app.use("/api/public", triagemRoutes)
 
 /* ============================================================
    404
@@ -108,7 +106,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 /* ============================================================
    START SERVER
    ============================================================ */
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
