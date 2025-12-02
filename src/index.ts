@@ -75,13 +75,13 @@ app.use("/api/profissional", profissionalRoutes);
 app.use("/api/agenda", agendaRoutes);
 app.use("/api/prescricao", prescricaoRoutes);
 app.use("/api/prontuarios", prontuarioRoutes);
-app.use("/public", publicRoutes);
+app.use("/api/public", publicRoutes);
 app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
 
 // 🔥 ROTA DA TRIAGEM POR IA (PÚBLICA)
-app.use("/api/public", triagemRoutes);
+app.use("/api/triagem", triagemRoutes);
 
 /* ============================================================
    404
