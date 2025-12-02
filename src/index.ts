@@ -1,8 +1,6 @@
 // src/index.ts
 import express, { Request, Response, NextFunction } from "express";
-import cors from "cors";
 import dotenv from "dotenv";
-
 import { requestLogger } from "./middleware/requestLogger";
 
 // Rotas
@@ -27,30 +25,26 @@ dotenv.config();
 const app = express();
 
 /* ============================================================
-   ✅ CORS 
+   ✅ CORS DEFINITIVO (Vercel + Localhost + Render)
    ============================================================ */
-
-// Domínios reais permitidos
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 
-  // Frontend Vercel REAL (ajuste AQUI)
-  "https://mind-care-4d54jqcgqg-lilians-projects-162305f6.vercel.app",
+  // FRONTEND DE PRODUÇÃO REAL
+  "https://mind-care-steel.vercel.app",
 
-  // Backend Render (caso teste no navegador)
+  // BACKEND Render — apenas debug via browser
   "https://backend-next-het9.onrender.com",
-
-  // IA FastAPI (opcional)
-  "https://mindcare-ai-ylk7.onrender.com",
 ];
 
-// Middleware 100% seguro
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    console.warn("🚫 Origem bloqueada pelo CORS:", origin);
   }
 
   res.header("Access-Control-Allow-Credentials", "true");
@@ -64,7 +58,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
 
 app.use(express.json());
 app.use(requestLogger);
@@ -86,7 +79,9 @@ app.use("/public", publicRoutes);
 app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
-app.use("/api/public", triagemRoutes)
+
+// 🔥 ROTA DA TRIAGEM POR IA (PÚBLICA)
+app.use("/api/public", triagemRoutes);
 
 /* ============================================================
    404
