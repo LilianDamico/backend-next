@@ -1,35 +1,35 @@
+// src/routes/profissional.routes.ts
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import {
+  getPerfilProfissional,
+  atualizarPerfilProfissional,
+  listarHorariosDoProfissional,
+  criarOuAtualizarHorario,
+  listarConsultasAgendadas,
+  buscarProfissionais
+} from "../controllers/profissional.controller";
+
 const router = Router();
 
-/**
- * Buscar profissionais por nome
- */
-router.get("/buscar", async (req, res) => {
-  try {
-    const { nome } = req.query;
+/* ============================================================
+   ROTAS DO PROFISSIONAL LOGADO
+   ============================================================ */
 
-    if (!nome) {
-      return res.status(400).json({ error: "Nome é obrigatório" });
-    }
+// Perfil
+router.get("/perfil", getPerfilProfissional);
+router.put("/perfil", atualizarPerfilProfissional);
 
-    const profissionais = await prisma.user.findMany({
-      where: {
-        tipo: "PROFISSIONAL",
-        nome: {
-          contains: String(nome),
-          mode: "insensitive",
-        },
-      },
-    });
+// Horários
+router.get("/horarios", listarHorariosDoProfissional);
+router.post("/horarios", criarOuAtualizarHorario);
 
-    return res.json({ profissionais });
-  } catch (e) {
-    console.error("Erro ao buscar profissionais:", e);
-    return res.status(500).json({ error: "Erro interno no servidor." });
-  }
-});
+// Consultas do profissional
+router.get("/consultas", listarConsultasAgendadas);
+
+/* ============================================================
+   ROTA SEARCH (CLIENTE → BUSCAR PROFISSIONAL POR NOME)
+   ============================================================ */
+router.get("/buscar", buscarProfissionais);
 
 export default router;

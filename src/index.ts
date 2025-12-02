@@ -79,6 +79,7 @@ app.use("/api/public", publicRoutes);
 app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
+app.use("/api/profissionais", profissionalRoutes);
 
 // 🔥 ROTA DA TRIAGEM POR IA (PÚBLICA)
 app.use("/api/triagem", triagemRoutes);
