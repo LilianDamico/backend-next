@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { listarHorariosPorNome } from "../controllers/public.controller";
+import { triagemPublicHandler } from "../controllers/triagemPublic.controller";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -28,5 +29,7 @@ router.get("/profissionais", async (req: Request, res: Response) => {
 });
 
 router.get("/horarios", listarHorariosPorNome);
+
+router.post("triagem", triagemPublicHandler);
 
 export default router;
