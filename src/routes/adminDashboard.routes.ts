@@ -1,10 +1,8 @@
-// src/routes/adminDashboard.routes.ts
 import { Router } from "express";
-import { getAdminDashboard } from "../controllers/adminDashboard.controller";
+import { adminDashboardController } from "../controllers/adminDashboard.controller";
 
 const router = Router();
 
-// GET /api/admin/dashboard
-router.get("/dashboard", getAdminDashboard);
+router.get("/dashboard", adminDashboardController);
 
 export default router;

@@ -39,37 +39,37 @@ enum Cancelador {
 
 // -------------------- USER --------------------
 model User {
-  id        String  @id @default(uuid())
-  nome      String
-  email     String @unique
-  senha     String
-  cpf       String @unique
-  telefone  String?
-  endereco  String?
-  tipo      TipoUsuario
+  id            String      @id @default(uuid())
+  nome          String
+  email         String      @unique
+  senha         String
+  cpf           String      @unique
+  telefone      String?
+  endereco      String?
+  tipo          TipoUsuario
   especialidade String?
-  bio       String?
-  cidade    String?
+  bio           String?
+  cidade        String?
 
-  consultasComoProfissional Consulta[] @relation("ConsultasProfissional")
-  consultasComoCliente      Consulta[] @relation("ConsultasCliente")
-  calendarios CalendarioProfissional[] @relation("UserCalendarios")
-  prescricoesFeitas     Prescricao[] @relation("PrescricaoProfissional")
-  prescricoesRecebidas  Prescricao[] @relation("PrescricaoPaciente")
+  consultasComoProfissional Consulta[]               @relation("ConsultasProfissional")
+  consultasComoCliente      Consulta[]               @relation("ConsultasCliente")
+  calendarios               CalendarioProfissional[] @relation("UserCalendarios")
+  prescricoesFeitas         Prescricao[]             @relation("PrescricaoProfissional")
+  prescricoesRecebidas      Prescricao[]             @relation("PrescricaoPaciente")
 
-  deletado       Boolean @default(false)
+  deletado       Boolean         @default(false)
   consentimentos Consentimento[]
-  criadoEm       DateTime @default(now())
+  criadoEm       DateTime        @default(now())
 }
 
 // -------------------- CLINICA --------------------
 model Clinica {
-  id       String  @id @default(uuid())
-  nome     String
-  endereco String?
-  telefone String?
+  id        String     @id @default(uuid())
+  nome      String
+  endereco  String?
+  telefone  String?
   consultas Consulta[]
-  criadoEm DateTime @default(now())
+  criadoEm  DateTime   @default(now())
 }
 
 // -------------------- PAGAMENTO --------------------
@@ -86,16 +86,16 @@ model Pagamento {
 
 // -------------------- PRONTUÁRIO --------------------
 model Prontuario {
-  id        String @id @default(uuid())
-  descricao String
-  criadoEm  DateTime @default(now())
+  id         String   @id @default(uuid())
+  descricao  String
+  criadoEm   DateTime @default(now())
   consultaId String
   consulta   Consulta @relation(fields: [consultaId], references: [id])
 }
 
 // -------------------- AVALIAÇÃO --------------------
 model Avaliacao {
-  id         String @id @default(uuid())
+  id         String   @id @default(uuid())
   nota       Int
   comentario String?
   criadoEm   DateTime @default(now())
@@ -105,35 +105,37 @@ model Avaliacao {
 
 // -------------------- AGENDA --------------------
 model CalendarioProfissional {
-  id             String @id @default(uuid())
+  id             String    @id @default(uuid())
   profissionalId String
-  profissional   User @relation("UserCalendarios", fields: [profissionalId], references: [id])
+  profissional   User      @relation("UserCalendarios", fields: [profissionalId], references: [id])
   dataHora       DateTime
-  disponivel     Boolean @default(true)
+  disponivel     Boolean   @default(true)
   observacao     String?
-  criadoEm       DateTime @default(now())
+  criadoEm       DateTime  @default(now())
   consulta       Consulta? @relation("CalendarioConsulta")
+
   @@unique([profissionalId, dataHora])
 }
 
 // -------------------- PRESCRIÇÃO --------------------
 model Prescricao {
-  id             String @id @default(uuid())
-  profissional   User @relation("PrescricaoProfissional", fields: [profissionalId], references: [id])
+  id             String    @id @default(uuid())
+  profissional   User      @relation("PrescricaoProfissional", fields: [profissionalId], references: [id])
   profissionalId String
-  paciente       User @relation("PrescricaoPaciente", fields: [pacienteId], references: [id])
+  paciente       User      @relation("PrescricaoPaciente", fields: [pacienteId], references: [id])
   pacienteId     String
   consultaId     String?
   consulta       Consulta? @relation("ConsultaPrescricoes", fields: [consultaId], references: [id])
-  tipo      String
-  conteudo  String
-  criadoEm  DateTime @default(now())
+  tipo           String
+  conteudo       String
+  criadoEm       DateTime  @default(now())
 }
 
-// -------------------- CONSULTA --------------------
+// ---------------- CONSULTA --------------------------
+
 model Consulta {
-  id             String @id @default(uuid())
-  horarioId      String @unique
+  id             String         @id @default(uuid())
+  horarioId      String         @unique
   profissionalId String
   clienteId      String?
   clinicaId      String?
@@ -141,36 +143,50 @@ model Consulta {
   status         StatusConsulta @default(AGENDADA)
   canceladaPor   Cancelador?
   motivoCancel   String?
-  criadoEm       DateTime @default(now())
+  criadoEm       DateTime       @default(now())
 
   horario      CalendarioProfissional @relation("CalendarioConsulta", fields: [horarioId], references: [id])
-  profissional User @relation("ConsultasProfissional", fields: [profissionalId], references: [id])
-  cliente      User? @relation("ConsultasCliente", fields: [clienteId], references: [id])
-  clinica      Clinica? @relation(fields: [clinicaId], references: [id])
+  profissional User                   @relation("ConsultasProfissional", fields: [profissionalId], references: [id])
+  cliente      User?                  @relation("ConsultasCliente", fields: [clienteId], references: [id])
+  clinica      Clinica?               @relation(fields: [clinicaId], references: [id])
 
   pagamentos  Pagamento[]
   prontuarios Prontuario[]
   avaliacoes  Avaliacao[]
-  prescricoes Prescricao[] @relation("ConsultaPrescricoes")
+
+  prescricoes Prescricao[]         @relation("ConsultaPrescricoes") // << OBRIGATÓRIO
+  pesquisas   PesquisaSatisfacao[] // << NOVO (adicionado corretamente)
 }
 
 // ---------------- LGPD CONSENTIMENTO ----------------
 model Consentimento {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  aceito    Boolean        // true = aceitou, false = revogou
-  metodo    String         // "web", "revogado", "app-mobile" etc
-  ip        String?        // IP bruto (opcional)
-  hashIp    String?        // hash do IP pro log
-  versao    String         // <<<<<<<<<< versão do termo aceito
-  origem    String         // "politica-privacidade.html", por ex.
+  aceito Boolean // true = aceitou, false = revogou
+  metodo String // "web", "revogado", "app-mobile" etc
+  ip     String? // IP bruto (opcional)
+  hashIp String? // hash do IP pro log
+  versao String // <<<<<<<<<< versão do termo aceito
+  origem String // "politica-privacidade.html", por ex.
 
-  expiraEm  DateTime?      // 24 meses, etc
-  criadoEm  DateTime @default(now())
+  expiraEm DateTime? // 24 meses, etc
+  criadoEm DateTime  @default(now())
 
   @@index([userId, criadoEm])
 }
 
+// -------------------- PESQUISA DE SATISFAÇÃO --------------------
+model PesquisaSatisfacao {
+  id         String   @id @default(uuid())
+  consultaId String
+  consulta   Consulta @relation(fields: [consultaId], references: [id])
 
+  nota       Int
+  comentario String?
+
+  criadoEm DateTime @default(now())
+
+  @@index([consultaId])
+}

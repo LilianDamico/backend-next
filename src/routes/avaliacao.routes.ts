@@ -1,12 +1,9 @@
 import { Router } from "express";
-import {
-  getAvaliacoes,
-  createAvaliacao,
-} from "../controllers/avaliacao.controller";
+import { autenticarJWT } from "../middleware/authMiddleware";
+import { criarAvaliacao } from "../controllers/avaliacao.controller";
 
 const router = Router();
 
-router.get("/", getAvaliacoes);
-router.post("/", createAvaliacao);
+router.post("/criar", autenticarJWT, criarAvaliacao);
 
 export default router;

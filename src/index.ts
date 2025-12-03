@@ -69,7 +69,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/clinicas", clinicaRoutes);
 app.use("/api/consultas", consultaRoutes);
 app.use("/api/pagamentos", pagamentoRoutes);
-app.use("/api/avaliacoes", avaliacaoRoutes);
+app.use("/api/avaliacao", avaliacaoRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/profissional", profissionalRoutes);
 app.use("/api/agenda", agendaRoutes);
