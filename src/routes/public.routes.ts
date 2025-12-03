@@ -1,3 +1,4 @@
+// src/routes/public.routes.ts
 import { Router, Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { listarHorariosPorNome } from "../controllers/public.controller";
@@ -6,7 +7,9 @@ import { triagemPublicHandler } from "../controllers/triagemPublic.controller";
 const router = Router();
 const prisma = new PrismaClient();
 
-// 🔹 Retorna profissionais públicos (sem autenticação)
+/**
+ * 🔹 Retorna profissionais públicos (sem autenticação)
+ */
 router.get("/profissionais", async (req: Request, res: Response) => {
   try {
     const profissionais = await prisma.user.findMany({
@@ -28,8 +31,14 @@ router.get("/profissionais", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * 🔹 Buscar horários por nome do profissional
+ */
 router.get("/horarios", listarHorariosPorNome);
 
-router.post("triagem", triagemPublicHandler);
+/**
+ * 🔥 Triagem pública (sem autenticação)
+ */
+router.post("/triagem", triagemPublicHandler);
 
 export default router;

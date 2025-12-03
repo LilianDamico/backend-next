@@ -79,9 +79,6 @@ app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
 
-// 🔥 ROTA DA TRIAGEM POR IA (PÚBLICA)
-app.use("/api/triagem", publicRoutes);
-
 /* ============================================================
    404
    ============================================================ */
