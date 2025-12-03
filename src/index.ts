@@ -18,7 +18,6 @@ import publicRoutes from "./routes/public.routes";
 import calendarioProfissionalRoutes from "./routes/calendarioProfissional.routes";
 import horarios from "./routes/horario.routes";
 import lgpdRoutes from "./routes/lgpd.routes";
-import triagemRoutes from "./routes/triagem.routes";
 
 dotenv.config();
 
@@ -81,7 +80,7 @@ app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
 
 // 🔥 ROTA DA TRIAGEM POR IA (PÚBLICA)
-app.use("/api/triagem", triagemRoutes);
+app.use("/api/triagem", publicRoutes);
 
 /* ============================================================
    404
