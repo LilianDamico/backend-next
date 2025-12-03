@@ -18,6 +18,7 @@ import publicRoutes from "./routes/public.routes";
 import calendarioProfissionalRoutes from "./routes/calendarioProfissional.routes";
 import horarios from "./routes/horario.routes";
 import lgpdRoutes from "./routes/lgpd.routes";
+import adminDashboardRoutes from "./routes/adminDashboard.routes"
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use("/api/public", publicRoutes);
 app.use("/api/calendario", calendarioProfissionalRoutes);
 app.use("/api/horarios", horarios);
 app.use("/api/lgpd", lgpdRoutes);
+app.use("/api/admin", adminDashboardRoutes);
 
 /* ============================================================
    404

@@ -7,14 +7,19 @@ export function permitirRoles(...rolesPermitidos: string[]) {
       return;
     }
 
-    const possuiPapel = req.user.roles?.some((role) =>
-      rolesPermitidos.includes(role)
-    );
+    const { tipo, roles } = req.user;
 
-    if (!possuiPapel) {
+    // 1) Se existir roles no token (futuro), usa elas
+    const possuiRoleArray = roles?.some((r) => rolesPermitidos.includes(r));
+
+    // 2) Sempre validar pelo 'tipo' do usuário (ADMIN, CLIENTE, PROFISSIONAL)
+    const possuiTipo = rolesPermitidos.includes(tipo);
+
+    if (!possuiRoleArray && !possuiTipo) {
       res.status(403).json({
         error: "Acesso negado. Permissão insuficiente.",
         permitido: rolesPermitidos,
+        recebido: { tipo, roles },
       });
       return;
     }
@@ -22,3 +27,4 @@ export function permitirRoles(...rolesPermitidos: string[]) {
     next();
   };
 }
+
