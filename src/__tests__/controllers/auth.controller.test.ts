@@ -1,20 +1,27 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { register, login, getProfile } from "../../controllers/auth.controller.js";
 import { mockReq, mockRes } from "../helpers/mockHttp.js";
 // @ts-expect-error resolvido pelo moduleNameMapper do Jest
 import { prisma } from "../lib/prisma.js";
 
-jest.mock("../lib/prisma");
-jest.mock("bcrypt", () => ({
-  hash: jest.fn(async () => "hashed"),
-  compare: jest.fn(),
+// Funções mock declaradas no escopo do módulo — acessíveis dentro das factories
+const mockHash = jest.fn();
+const mockCompare = jest.fn();
+const mockSign = jest.fn();
+
+jest.unstable_mockModule("bcrypt", () => ({
+  default: { hash: mockHash, compare: mockCompare, genSalt: jest.fn() },
+  hash: mockHash,
+  compare: mockCompare,
 }));
-jest.mock("jsonwebtoken", () => ({
-  sign: jest.fn().mockReturnValue("mocked-token"),
+
+jest.unstable_mockModule("jsonwebtoken", () => ({
+  default: { sign: mockSign, verify: jest.fn(), decode: jest.fn() },
+  sign: mockSign,
   verify: jest.fn(),
 }));
+
+// Importação dinâmica APÓS registro dos mocks
+const { register, login, getProfile } = await import("../../controllers/auth.controller.js");
 
 const mockUser = prisma.user as jest.Mocked<typeof prisma.user>;
 
@@ -23,6 +30,9 @@ describe("auth.controller", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       process.env.JWT_SECRET = "test-secret";
+      mockHash.mockResolvedValue("hashed" as any);
+      mockCompare.mockResolvedValue(false as any);
+      mockSign.mockReturnValue("mocked-token" as any);
     });
 
     it("deve retornar 400 quando campos estão faltando", async () => {
@@ -103,7 +113,7 @@ describe("auth.controller", () => {
 
       await register(req, res);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith("123456", 10);
+      expect(mockHash).toHaveBeenCalledWith("123456", 10);
       expect(mockUser.create).toHaveBeenCalledWith({
         data: {
           nome: "Maria",
@@ -153,6 +163,9 @@ describe("auth.controller", () => {
     beforeEach(() => {
       jest.clearAllMocks();
       process.env.JWT_SECRET = "test-secret";
+      mockHash.mockResolvedValue("hashed" as any);
+      mockCompare.mockResolvedValue(false as any);
+      mockSign.mockReturnValue("mocked-token" as any);
     });
 
     it("deve retornar 400 quando login ou senha estão faltando", async () => {
@@ -194,11 +207,11 @@ describe("auth.controller", () => {
         tipo: "CLIENTE",
         senha: "hashed-password",
       });
-      (bcrypt.compare as any).mockResolvedValue(false);
+      mockCompare.mockResolvedValue(false as any);
 
       await login(req, res);
 
-      expect(bcrypt.compare).toHaveBeenCalledWith("123456", "hashed-password");
+      expect(mockCompare).toHaveBeenCalledWith("123456", "hashed-password");
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ error: "Senha incorreta." });
     });
@@ -215,11 +228,11 @@ describe("auth.controller", () => {
         tipo: "CLIENTE",
         senha: "hashed-password",
       });
-      (bcrypt.compare as any).mockResolvedValue(true);
+      mockCompare.mockResolvedValue(true as any);
 
       await login(req, res);
 
-      expect(jwt.sign).toHaveBeenCalledWith(
+      expect(mockSign).toHaveBeenCalledWith(
         {
           id: "user-1",
           email: "maria@email.com",

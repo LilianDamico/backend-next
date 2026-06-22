@@ -31,6 +31,7 @@ module.exports = {
     // Stripping de .js para todos os outros imports relativos (ts-jest ESM padrão)
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
+  roots: ["<rootDir>"],
   clearMocks: true,
   resetMocks: false,
   coverageDirectory: "coverage",

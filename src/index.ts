@@ -1,6 +1,8 @@
 // src/index.ts
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./docs/swagger.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 
 // Rotas
@@ -66,6 +68,19 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(requestLogger);
+
+/* ============================================================
+   SWAGGER — Documentação Interativa
+   ============================================================ */
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "MindCare API Docs",
+  swaggerOptions: {
+    persistAuthorization: true,
+    docExpansion: "list",
+    filter: true,
+    tryItOutEnabled: true,
+  },
+}));
 
 /* ============================================================
    ROTAS

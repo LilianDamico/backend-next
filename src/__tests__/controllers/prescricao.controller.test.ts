@@ -5,8 +5,8 @@ import {
   listarPrescricoesPorNomeProfissional,
 } from "../../controllers/prescricao.controller.js";
 import { mockReq, mockRes } from "../helpers/mockHttp.js";
-
-const prisma: any = require("../lib/prisma").prisma;
+// @ts-expect-error resolvido pelo moduleNameMapper do Jest
+import { prisma } from "../lib/prisma.js";
 
 describe("prescricao.controller", () => {
   beforeEach(() => {

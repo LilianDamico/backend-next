@@ -1,20 +1,22 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import bcrypt from "bcryptjs";
-import {
+import { mockReq, mockRes } from "../helpers/mockHttp.js";
+// @ts-expect-error resolvido pelo moduleNameMapper do Jest
+import { prisma } from "../lib/prisma.js";
+
+const mockBcryptHash = jest.fn();
+
+jest.unstable_mockModule("bcryptjs", () => ({
+  default: { hash: mockBcryptHash, compare: jest.fn(), genSalt: jest.fn() },
+  hash: mockBcryptHash,
+}));
+
+const {
   criarUsuario,
   listarUsuarios,
   listarProfissionaisPublicos,
   buscarUsuarioPorId,
   deletarUsuario,
-} from "../../controllers/user.controller.js";
-import { mockReq, mockRes } from "../helpers/mockHttp.js";
-// @ts-expect-error resolvido pelo moduleNameMapper do Jest
-import { prisma } from "../lib/prisma.js";
-
-jest.mock("../lib/prisma");
-jest.mock("bcryptjs", () => ({
-  hash: jest.fn(async () => "hashed-password"),
-}));
+} = await import("../../controllers/user.controller.js");
 
 const mockUser = prisma.user as jest.Mocked<typeof prisma.user>;
 
@@ -22,6 +24,7 @@ describe("user.controller", () => {
   describe("criarUsuario", () => {
     beforeEach(() => {
       jest.clearAllMocks();
+      mockBcryptHash.mockResolvedValue("hashed-password" as any);
     });
 
     it("deve retornar 400 quando campos obrigatórios estão faltando", async () => {
@@ -112,7 +115,7 @@ describe("user.controller", () => {
 
       await criarUsuario(req, res);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith("123456", 10);
+      expect(mockBcryptHash).toHaveBeenCalledWith("123456", 10);
       expect(mockUser.create).toHaveBeenCalledWith({
         data: {
           nome: "Maria",

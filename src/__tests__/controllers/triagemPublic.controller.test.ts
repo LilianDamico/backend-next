@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-jest.mock("../../services/triagemIA.service", () => ({
-  rodarTriagemIA: jest.fn(),
-}));
-
-import { triagemPublicHandler } from "../../controllers/triagemPublic.controller.js";
-import { rodarTriagemIA } from "../../services/triagemIA.service.js";
 import { mockReq, mockRes } from "../helpers/mockHttp.js";
 
-const mockRodarTriagem: any = rodarTriagemIA;
+const mockRodarTriagemIA = jest.fn();
+
+jest.unstable_mockModule("../../services/triagemIA.service.js", () => ({
+  rodarTriagemIA: mockRodarTriagemIA,
+}));
+
+const { triagemPublicHandler } = await import("../../controllers/triagemPublic.controller.js");
 
 describe("triagemPublic.controller", () => {
   beforeEach(() => {
@@ -52,19 +52,19 @@ describe("triagemPublic.controller", () => {
 
   it("deve retornar o resultado da IA com sucesso", async () => {
     const resultado = { risco: "baixo", orientacao: "Procure descansar" };
-    mockRodarTriagem.mockResolvedValue(resultado);
+    mockRodarTriagemIA.mockResolvedValue(resultado as any);
     const req = mockReq({ body: { mensagem: "Estou ansioso" } });
     const res = mockRes();
 
     await triagemPublicHandler(req, res);
 
-    expect(mockRodarTriagem).toHaveBeenCalledWith("Estou ansioso");
+    expect(mockRodarTriagemIA).toHaveBeenCalledWith("Estou ansioso");
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(resultado);
   });
 
   it("deve retornar 500 quando o serviço falhar", async () => {
-    mockRodarTriagem.mockRejectedValue(new Error("falha"));
+    mockRodarTriagemIA.mockRejectedValue(new Error("falha"));
     const req = mockReq({ body: { mensagem: "Estou ansioso" } });
     const res = mockRes();
 

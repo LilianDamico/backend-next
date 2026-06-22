@@ -1,10 +1,14 @@
 import { jest } from "@jest/globals";
-import jwt from "jsonwebtoken";
-import { autenticarJWT } from "../../middleware/authMiddleware.js";
 import { mockReq, mockRes, mockNext } from "../helpers/mockHttp.js";
 
-jest.mock("jsonwebtoken");
-const jwtVerify = jwt.verify as jest.Mock;
+const mockVerify = jest.fn();
+
+jest.unstable_mockModule("jsonwebtoken", () => ({
+  default: { sign: jest.fn(), verify: mockVerify, decode: jest.fn() },
+  verify: mockVerify,
+}));
+
+const { autenticarJWT } = await import("../../middleware/authMiddleware.js");
 
 describe("authMiddleware — autenticarJWT", () => {
   const next = mockNext();
@@ -36,7 +40,7 @@ describe("authMiddleware — autenticarJWT", () => {
   });
 
   it("deve retornar 403 quando o token é inválido ou expirado", () => {
-    jwtVerify.mockImplementation(() => { throw new Error("invalid token"); });
+    mockVerify.mockImplementation(() => { throw new Error("invalid token"); });
     const req = mockReq({ headers: { authorization: "Bearer token-invalido" } });
     const res = mockRes();
 
@@ -49,7 +53,7 @@ describe("authMiddleware — autenticarJWT", () => {
 
   it("deve chamar next() e popular req.user quando o token é válido", () => {
     const payload = { id: "u1", email: "a@b.com", cpf: "123", tipo: "CLIENTE" as const };
-    jwtVerify.mockReturnValue(payload);
+    mockVerify.mockReturnValue(payload as any);
 
     const req = mockReq({ headers: { authorization: "Bearer token-valido" } });
     const res = mockRes();
@@ -63,7 +67,7 @@ describe("authMiddleware — autenticarJWT", () => {
 
   it("deve popular req.user.roles como array vazio quando não há roles no token", () => {
     const payload = { id: "u1", email: "a@b.com", cpf: "123", tipo: "CLIENTE" as const };
-    jwtVerify.mockReturnValue(payload);
+    mockVerify.mockReturnValue(payload as any);
 
     const req = mockReq({ headers: { authorization: "Bearer token-valido" } });
     const res = mockRes();

@@ -1,25 +1,22 @@
-import { jest } from "@jest/globals";
-import { rodarTriagemIA } from "../../services/triagemIA.service.js";
+import { jest, beforeEach, describe, it, expect } from "@jest/globals";
 
-// Variável definida antes do mock para ser acessível via closure lazy.
-// A factory do jest.mock é hoisted, mas a função interna só é chamada
-// durante a execução do teste — depois que mockCreate for inicializado.
-let mockCreate: jest.Mock<any>;
+const mockCreate = jest.fn();
 
-jest.mock("openai", () => {
-  return jest.fn().mockImplementation(() => ({
-    chat: {
+jest.unstable_mockModule("openai", () => ({
+  default: class FakeOpenAI {
+    chat = {
       completions: {
-        // Closure lazy: acessa mockCreate no momento da chamada, não da criação
         create: (...args: any[]) => mockCreate(...args),
       },
-    },
-  }));
-});
+    };
+  },
+}));
+
+const { rodarTriagemIA } = await import("../../services/triagemIA.service.js");
 
 describe("triagemIA.service — rodarTriagemIA", () => {
   beforeEach(() => {
-    mockCreate = jest.fn();
+    mockCreate.mockReset();
     process.env.OPENAI_API_KEY = "test-key";
   });
 

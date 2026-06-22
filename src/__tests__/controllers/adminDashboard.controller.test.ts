@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-jest.mock("../../services/adminDashboard.service", () => ({
-  getAdminDashboardData: jest.fn(),
-}));
-
-import { adminDashboardController } from "../../controllers/adminDashboard.controller.js";
-import { getAdminDashboardData } from "../../services/adminDashboard.service.js";
 import { mockReq, mockRes } from "../helpers/mockHttp.js";
 
-const mockGetData: any = getAdminDashboardData;
+const mockGetAdminDashboardData = jest.fn();
+
+jest.unstable_mockModule("../../services/adminDashboard.service.js", () => ({
+  getAdminDashboardData: mockGetAdminDashboardData,
+}));
+
+const { adminDashboardController } = await import("../../controllers/adminDashboard.controller.js");
 
 describe("adminDashboard.controller", () => {
   beforeEach(() => {
@@ -16,13 +16,13 @@ describe("adminDashboard.controller", () => {
 
   it("deve retornar os dados do painel com sucesso", async () => {
     const data = { usuarios: 10, faturamento: 2000 };
-    mockGetData.mockResolvedValue(data);
+    mockGetAdminDashboardData.mockResolvedValue(data as any);
     const req = mockReq();
     const res = mockRes();
 
     await adminDashboardController(req, res);
 
-    expect(mockGetData).toHaveBeenCalled();
+    expect(mockGetAdminDashboardData).toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({
       sucesso: true,
       painel: data,
@@ -30,7 +30,7 @@ describe("adminDashboard.controller", () => {
   });
 
   it("deve retornar 500 quando o serviço falhar", async () => {
-    mockGetData.mockRejectedValue(new Error("falha no serviço"));
+    mockGetAdminDashboardData.mockRejectedValue(new Error("falha no serviço"));
     const req = mockReq();
     const res = mockRes();
 
