@@ -1,10 +1,7 @@
 import type { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "supersecreto";
 
 /**
  * ===========================
@@ -25,7 +22,6 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Tipo inválido." });
     }
 
-    // Verifica duplicidade de email ou CPF
     const existente = await prisma.user.findFirst({
       where: { OR: [{ email }, { cpf }] },
     });
@@ -38,13 +34,7 @@ export const register = async (req: Request, res: Response) => {
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const novoUser = await prisma.user.create({
-      data: {
-        nome: nome,
-        email,
-        cpf,
-        senha: senhaHash,
-        tipo,
-      },
+      data: { nome, email, cpf, senha: senhaHash, tipo },
     });
 
     return res.status(201).json({
@@ -76,7 +66,6 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Login e senha são obrigatórios." });
     }
 
-    // Aceita email ou CPF
     const user = await prisma.user.findFirst({
       where: { OR: [{ email: login }, { cpf: login }] },
     });
@@ -90,34 +79,21 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Senha incorreta." });
     }
 
-    // Gera token
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        tipo: user.tipo,
-      },
-      JWT_SECRET,
+      { id: user.id, email: user.email, cpf: user.cpf, tipo: user.tipo },
+      process.env.JWT_SECRET!,
       { expiresIn: "8h" }
     );
 
-    // ✅ Resposta NO FORMATO EXATO que o frontend precisa
     return res.status(200).json({
       token,
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        tipo: user.tipo,
-      }
+      user: { id: user.id, nome: user.nome, email: user.email, tipo: user.tipo },
     });
-
   } catch (error: any) {
     console.error("❌ Erro no login:", error);
     return res.status(500).json({ error: "Erro interno ao fazer login." });
   }
 };
-
 
 /**
  * ===========================
@@ -126,14 +102,8 @@ export const login = async (req: Request, res: Response) => {
  */
 export const getProfile = async (req: Request, res: Response) => {
   try {
-    const user = (req as any).user;
-
-    if (!user) {
-      return res.status(401).json({ error: "Token não fornecido." });
-    }
-
     const userData = await prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: req.user!.id },
       select: { id: true, nome: true, email: true, cpf: true, tipo: true },
     });
 
@@ -141,9 +111,9 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-    res.json(userData);
+    return res.json(userData);
   } catch (error: any) {
     console.error("❌ Erro ao buscar perfil:", error);
-    res.status(500).json({ error: "Erro ao buscar perfil." });
+    return res.status(500).json({ error: "Erro ao buscar perfil." });
   }
 };

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 export const listarConsentimentos = async (req: Request, res: Response) => {
   const { userId } = req.query;
@@ -13,7 +13,7 @@ export const listarConsentimentos = async (req: Request, res: Response) => {
 };
 
 export const listarTermosUsuario = async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  const { userId } = req.params as Record<string, string>;
   res.json({
     usuario: await prisma.user.findUnique({ where: { id: userId }}),
     consentimentos: await prisma.consentimento.findMany({

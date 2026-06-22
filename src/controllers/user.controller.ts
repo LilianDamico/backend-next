@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -140,7 +140,7 @@ export async function listarProfissionaisPublicos(req: Request, res: Response) {
 // 🕵️ 4️⃣ Buscar usuário por ID
 // ==========================================================
 export async function buscarUsuarioPorId(req: Request, res: Response) {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
 
   try {
     const usuario = await prisma.user.findUnique({
@@ -204,7 +204,7 @@ export async function atualizarUsuario(req: Request, res: Response) {
 // 🗑️ 6️⃣ Deletar usuário
 // ==========================================================
 export async function deletarUsuario(req: Request, res: Response) {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
 
   try {
     await prisma.user.delete({ where: { id } });

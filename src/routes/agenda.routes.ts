@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   buscarProfissionaisPorNome,
   listarHorariosPorNome,
-} from "../controllers/agenda.controller";
+} from "../controllers/agenda.controller.js";
 
 const router = Router();
 

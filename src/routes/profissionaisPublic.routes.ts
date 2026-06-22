@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listarProfissionaisPublicos } from "../controllers/profissional.controller";
+import { listarProfissionaisPublicos } from "../controllers/profissional.controller.js";
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { autenticarJWT } from "../middleware/authMiddleware";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
 
 import {
   calendarioMe,
@@ -7,7 +7,7 @@ import {
   calendarioGerarDia,
   calendarioAtualizar,
   calendarioExcluir,
-} from "../controllers/calendarioProfissional.controller";
+} from "../controllers/calendarioProfissional.controller.js";
 
 const router = Router();
 

@@ -3,9 +3,7 @@
 // ============================================================
 
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.js";
 
 // Helper
 const toDate = (s: string) => new Date(s);
@@ -114,7 +112,7 @@ export async function calendarioGerarDia(req: Request, res: Response) {
 export async function calendarioAtualizar(req: Request, res: Response) {
   try {
     const user = req.user as any;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { observacao, disponivel } = req.body;
 
     const slot = await prisma.calendarioProfissional.findFirst({
@@ -146,7 +144,7 @@ export async function calendarioAtualizar(req: Request, res: Response) {
 export async function calendarioExcluir(req: Request, res: Response) {
   try {
     const user = req.user as any;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
 
     const slot = await prisma.calendarioProfissional.findFirst({
       where: { id, profissionalId: user.id },

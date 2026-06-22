@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 /* ========================================================
    POST → Criar prescrição
@@ -36,7 +36,7 @@ export async function criarPrescricao(req: Request, res: Response) {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erro ao criar prescrição." });
+    return res.status(500).json({ error: "Erro ao criar prescrição." });
   }
 }
 
@@ -45,7 +45,7 @@ export async function criarPrescricao(req: Request, res: Response) {
 ======================================================== */
 export async function listarPrescricoesPorNomePaciente(req: Request, res: Response) {
   try {
-    const { nome } = req.params;
+    const { nome } = req.params as Record<string, string>;
 
     const paciente = await prisma.user.findFirst({
       where: { nome: { equals: nome, mode: "insensitive" } }
@@ -58,10 +58,10 @@ export async function listarPrescricoesPorNomePaciente(req: Request, res: Respon
       include: { consulta: true }
     });
 
-    res.json(lista);
+    return res.json(lista);
 
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar prescrições pelo nome do paciente" });
+    return res.status(500).json({ error: "Erro ao buscar prescrições pelo nome do paciente" });
   }
 }
 
@@ -70,7 +70,7 @@ export async function listarPrescricoesPorNomePaciente(req: Request, res: Respon
 ======================================================== */
 export async function listarPrescricoesPorNomeProfissional(req: Request, res: Response) {
   try {
-    const { nome } = req.params;
+    const { nome } = req.params as Record<string, string>;
 
     const profissional = await prisma.user.findFirst({
       where: { nome: { equals: nome, mode: "insensitive" } }
@@ -83,9 +83,9 @@ export async function listarPrescricoesPorNomeProfissional(req: Request, res: Re
       include: { consulta: true, paciente: true }
     });
 
-    res.json(lista);
+    return res.json(lista);
 
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar prescrições pelo nome do profissional" });
+    return res.status(500).json({ error: "Erro ao buscar prescrições pelo nome do profissional" });
   }
 }

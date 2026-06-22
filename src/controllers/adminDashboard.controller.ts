@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getAdminDashboardData } from "../services/adminDashboard.service";
+import { getAdminDashboardData } from "../services/adminDashboard.service.js";
 
 export async function adminDashboardController(req: Request, res: Response) {
   try {

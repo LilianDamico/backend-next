@@ -1,12 +1,17 @@
 // src/services/triagemIA.service.ts
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization — evita exceção em ambientes sem OPENAI_API_KEY (ex: testes)
+let _openai: OpenAI | null = null;
 
-if (!process.env.OPENAI_API_KEY) {
-  console.warn("[TriagemIA] OPENAI_API_KEY não definida no .env");
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("[TriagemIA] OPENAI_API_KEY não está definida. Configure no .env.");
+    }
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
 }
 
 export type TriagemRisco = "risco_baixo" | "risco_moderado" | "risco_alto";
@@ -58,7 +63,7 @@ Regras importantes:
 export async function rodarTriagemIA(
   mensagem: string
 ): Promise<TriagemResult> {
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.3,
     messages: [

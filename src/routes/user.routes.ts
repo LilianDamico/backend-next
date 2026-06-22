@@ -6,7 +6,7 @@ import {
   buscarUsuarioPorId,
   atualizarUsuario,
   deletarUsuario,
-} from "../controllers/user.controller";
+} from "../controllers/user.controller.js";
 
 const router = Router();
 

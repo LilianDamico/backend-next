@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { autenticarJWT } from "../middleware/authMiddleware";
-import { permitirRoles } from "../middleware/roleMiddleware";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
+import { permitirRoles } from "../middleware/roleMiddleware.js";
 import {
   listarHorariosPorNome,
   criarHorarioPorNome,
   atualizarHorarioPorNome,
   deletarHorarioPorNome,
-} from "../controllers/horario.controller";
+} from "../controllers/horario.controller.js";
 
 const router = Router();
 

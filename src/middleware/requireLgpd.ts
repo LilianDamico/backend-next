@@ -1,6 +1,6 @@
 // src/middleware/requireLgpd.ts
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 export const requireLgpdAtivo = async (
   req: Request,

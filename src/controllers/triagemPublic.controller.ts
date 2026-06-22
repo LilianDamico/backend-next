@@ -1,6 +1,6 @@
 // src/controllers/triagemPublic.controller.ts
 import { Request, Response } from "express";
-import { rodarTriagemIA } from "../services/triagemIA.service";
+import { rodarTriagemIA } from "../services/triagemIA.service.js";
 
 export async function triagemPublicHandler(req: Request, res: Response) {
   try {

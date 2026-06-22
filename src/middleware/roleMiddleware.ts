@@ -16,11 +16,7 @@ export function permitirRoles(...rolesPermitidos: string[]) {
     const possuiTipo = rolesPermitidos.includes(tipo);
 
     if (!possuiRoleArray && !possuiTipo) {
-      res.status(403).json({
-        error: "Acesso negado. Permissão insuficiente.",
-        permitido: rolesPermitidos,
-        recebido: { tipo, roles },
-      });
+      res.status(403).json({ error: "Acesso negado. Permissão insuficiente." });
       return;
     }
 

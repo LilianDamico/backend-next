@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getClinicas,
   createClinica,
-} from "../controllers/clinica.controller";
+} from "../controllers/clinica.controller.js";
 
 const router = Router();
 

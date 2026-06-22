@@ -1,26 +1,31 @@
 // src/index.ts
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-import { requestLogger } from "./middleware/requestLogger";
+import { requestLogger } from "./middleware/requestLogger.js";
 
 // Rotas
-import userRoutes from "./routes/user.routes";
-import clinicaRoutes from "./routes/clinica.routes";
-import consultaRoutes from "./routes/consulta.routes";
-import pagamentoRoutes from "./routes/pagamento.routes";
-import avaliacaoRoutes from "./routes/avaliacao.routes";
-import authRoutes from "./routes/auth.routes";
-import profissionalRoutes from "./routes/profissional.routes";
-import agendaRoutes from "./routes/agenda.routes";
-import prescricaoRoutes from "./routes/prescricao.routes";
-import prontuarioRoutes from "./routes/prontuario.routes";
-import publicRoutes from "./routes/public.routes";
-import calendarioProfissionalRoutes from "./routes/calendarioProfissional.routes";
-import horarios from "./routes/horario.routes";
-import lgpdRoutes from "./routes/lgpd.routes";
-import adminDashboardRoutes from "./routes/adminDashboard.routes"
+import userRoutes from "./routes/user.routes.js";
+import clinicaRoutes from "./routes/clinica.routes.js";
+import consultaRoutes from "./routes/consulta.routes.js";
+import pagamentoRoutes from "./routes/pagamento.routes.js";
+import avaliacaoRoutes from "./routes/avaliacao.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import profissionalRoutes from "./routes/profissional.routes.js";
+import agendaRoutes from "./routes/agenda.routes.js";
+import prescricaoRoutes from "./routes/prescricao.routes.js";
+import prontuarioRoutes from "./routes/prontuario.routes.js";
+import publicRoutes from "./routes/public.routes.js";
+import calendarioProfissionalRoutes from "./routes/calendarioProfissional.routes.js";
+import horarios from "./routes/horario.routes.js";
+import lgpdRoutes from "./routes/lgpd.routes.js";
+import adminDashboardRoutes from "./routes/adminDashboard.routes.js"
 
 dotenv.config();
+
+if (!process.env.JWT_SECRET) {
+  console.error("❌ FATAL: JWT_SECRET não definido nas variáveis de ambiente. Encerrando.");
+  process.exit(1);
+}
 
 const app = express();
 
@@ -56,7 +61,7 @@ app.use((req, res, next) => {
 
   if (req.method === "OPTIONS") return res.sendStatus(200);
 
-  next();
+  return next();
 });
 
 app.use(express.json());

@@ -3,72 +3,22 @@
 // ===============================================================
 
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import { prisma } from "../lib/prisma.js";
 import { differenceInHours } from "date-fns";
-
-// ===============================================================
-// FUNÇÃO PARA EXTRAIR USUÁRIO DO TOKEN
-// ===============================================================
-interface TokenUser {
-  id: string;
-  tipo?: string;
-  nome?: string;
-}
-
-function getUserFromToken(req: Request): TokenUser | null {
-  const auth = req.headers.authorization;
-  if (!auth) return null;
-
-  const token = auth.split(" ")[1];
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET ?? "supersecreto"
-    ) as JwtPayload;
-
-    return {
-      id: decoded.id as string,
-      tipo: decoded.tipo as string,
-      nome: decoded.nome as string,
-    };
-  } catch {
-    return null;
-  }
-}
 
 // ===============================================================
 // 1) AGENDAR CONSULTA (CLIENTE)
 // ===============================================================
-// BODY esperado: { clienteNome, profissionalNome, horarioId }
+// BODY esperado: { horarioId }
+// clienteId vem do token JWT; profissionalId vem do horário
 export async function criarConsulta(req: Request, res: Response) {
-  const { clienteNome, profissionalNome, horarioId } = req.body;
+  const clienteId = req.user!.id;
+  const { horarioId } = req.body;
 
-  if (!clienteNome || !profissionalNome || !horarioId)
-    return res.status(400).json({ error: "Dados obrigatórios ausentes." });
+  if (!horarioId)
+    return res.status(400).json({ error: "horarioId é obrigatório." });
 
   try {
-    const cliente = await prisma.user.findFirst({
-      where: {
-        nome: { equals: clienteNome, mode: "insensitive" },
-        tipo: "CLIENTE",
-      },
-    });
-
-    const profissional = await prisma.user.findFirst({
-      where: {
-        nome: { equals: profissionalNome, mode: "insensitive" },
-        tipo: "PROFISSIONAL",
-      },
-    });
-
-    if (!cliente || !profissional)
-      return res
-        .status(404)
-        .json({ error: "Cliente ou profissional não localizado." });
-
     const horario = await prisma.calendarioProfissional.findUnique({
       where: { id: horarioId },
     });
@@ -81,8 +31,8 @@ export async function criarConsulta(req: Request, res: Response) {
 
     const consulta = await prisma.consulta.create({
       data: {
-        profissionalId: profissional.id,
-        clienteId: cliente.id,
+        profissionalId: horario.profissionalId,
+        clienteId,
         horarioId,
         dataHora: horario.dataHora,
         status: "AGENDADA",
@@ -108,20 +58,13 @@ export async function criarConsulta(req: Request, res: Response) {
 // 2) LISTAR CONSULTAS DO CLIENTE (TOKEN)
 // ===============================================================
 export async function listarConsultasDoCliente(req: Request, res: Response) {
-  const user = getUserFromToken(req);
-  if (!user || user.tipo !== "CLIENTE")
-    return res.status(403).json({ error: "Acesso negado." });
-
   try {
     const consultas = await prisma.consulta.findMany({
-      where: { clienteId: user.id },
+      where: { clienteId: req.user!.id },
       include: {
         profissional: true,
         horario: true,
-        // 🔥 aqui vem a info pra saber se já foi avaliada
-        avaliacoes: {
-          select: { id: true },
-        },
+        avaliacoes: { select: { id: true } },
       },
       orderBy: { dataHora: "asc" },
     });
@@ -133,24 +76,16 @@ export async function listarConsultasDoCliente(req: Request, res: Response) {
 }
 
 // ===============================================================
-// 3) LISTAR CONSULTAS DO PROFISSIONAL (TOKEN) 🔥
+// 3) LISTAR CONSULTAS DO PROFISSIONAL (TOKEN)
 // ===============================================================
 export async function listarConsultasDoProfissional(req: Request, res: Response) {
-  const user = getUserFromToken(req);
-
-  if (!user || user.tipo !== "PROFISSIONAL")
-    return res.status(403).json({ error: "Acesso negado." });
-
   try {
     const consultas = await prisma.consulta.findMany({
-      where: { profissionalId: user.id }, // token resolve tudo
+      where: { profissionalId: req.user!.id },
       include: {
         cliente: { select: { nome: true } },
         horario: true,
-        // também traz avaliacoes, útil pro painel do profissional
-        avaliacoes: {
-          select: { id: true, nota: true },
-        },
+        avaliacoes: { select: { id: true, nota: true } },
       },
       orderBy: { dataHora: "asc" },
     });
@@ -163,10 +98,10 @@ export async function listarConsultasDoProfissional(req: Request, res: Response)
 }
 
 // ===============================================================
-// 4) BUSCAR CONSULTAS POR NOME DO CLIENTE
+// 4) BUSCAR CONSULTAS POR NOME DO CLIENTE (restrito a ADMIN/PROFISSIONAL)
 // ===============================================================
 export async function listarConsultasPorClienteNome(req: Request, res: Response) {
-  const { userNome } = req.params;
+  const { userNome } = req.params as Record<string, string>;
 
   if (!userNome)
     return res.status(400).json({ error: "Nome do cliente é obrigatório." });
@@ -187,16 +122,14 @@ export async function listarConsultasPorClienteNome(req: Request, res: Response)
       include: {
         profissional: true,
         horario: true,
-        avaliacoes: {
-          select: { id: true },
-        },
+        avaliacoes: { select: { id: true } },
       },
       orderBy: { dataHora: "asc" },
     });
 
-    res.json(consultas);
+    return res.json(consultas);
   } catch {
-    res.status(500).json({ error: "Erro ao buscar consultas." });
+    return res.status(500).json({ error: "Erro ao buscar consultas." });
   }
 }
 
@@ -204,11 +137,7 @@ export async function listarConsultasPorClienteNome(req: Request, res: Response)
 // 5) CANCELAR CONSULTA (CLIENTE)
 // ===============================================================
 export async function cancelarConsulta(req: Request, res: Response) {
-  const user = getUserFromToken(req);
-  if (!user || user.tipo !== "CLIENTE")
-    return res.status(403).json({ error: "Acesso negado." });
-
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
 
   try {
     const consulta = await prisma.consulta.findUnique({
@@ -218,7 +147,7 @@ export async function cancelarConsulta(req: Request, res: Response) {
 
     if (!consulta)
       return res.status(404).json({ error: "Consulta não encontrada." });
-    if (consulta.clienteId !== user.id)
+    if (consulta.clienteId !== req.user!.id)
       return res.status(403).json({ error: "Você não pode cancelar essa consulta." });
 
     const horas = differenceInHours(consulta.dataHora, new Date());

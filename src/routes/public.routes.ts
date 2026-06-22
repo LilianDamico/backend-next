@@ -1,11 +1,10 @@
 // src/routes/public.routes.ts
 import { Router, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { listarHorariosPorNome } from "../controllers/public.controller";
-import { triagemPublicHandler } from "../controllers/triagemPublic.controller";
+import { prisma } from "../lib/prisma.js";
+import { listarHorariosPorNome } from "../controllers/public.controller.js";
+import { triagemPublicHandler } from "../controllers/triagemPublic.controller.js";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * 🔹 Retorna profissionais públicos (sem autenticação)

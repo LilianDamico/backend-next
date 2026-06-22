@@ -1,8 +1,8 @@
 // src/controllers/lgpd.controller.ts
 import { Request, Response } from "express";
 import crypto from "crypto";
-import { prisma } from "../lib/prisma";
-import { VERSAO_LGPD, ARQUIVO_LGPD } from "../lgpd/versaoLGPD";
+import { prisma } from "../lib/prisma.js";
+import { VERSAO_LGPD, ARQUIVO_LGPD } from "../lgpd/versaoLGPD.js";
 
 function hashIP(ip: string) {
   return crypto.createHash("sha256").update(ip).digest("hex");

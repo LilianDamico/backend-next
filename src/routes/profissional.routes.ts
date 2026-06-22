@@ -8,7 +8,7 @@ import {
   criarOuAtualizarHorario,
   listarConsultasAgendadas,
   buscarProfissionais
-} from "../controllers/profissional.controller";
+} from "../controllers/profissional.controller.js";
 
 const router = Router();
 

@@ -3,7 +3,7 @@ import {
   criarPrescricao,
   listarPrescricoesPorNomePaciente,
   listarPrescricoesPorNomeProfissional
-} from "../controllers/prescricao.controller";
+} from "../controllers/prescricao.controller.js";
 
 const router = Router();
 

@@ -1,7 +1,8 @@
 // src/services/adminDashboard.service.ts
-import { PrismaClient, StatusConsulta } from "@prisma/client";
+import { StatusConsulta } from "../generated/prisma/enums.js";
+import { prisma } from "../lib/prisma.js";
 
-const prisma = new PrismaClient();
+type PagamentoRow = { valor: number | bigint | null; status: string };
 
 export type AdminAppointment = {
   time: string;
@@ -101,7 +102,7 @@ export async function getAdminDashboardData(): Promise<AdminDashboardDTO> {
     },
   });
 
-  const currentMonth = pagamentos.reduce((sum, p) => sum + Number(p.valor ?? 0), 0);
+  const currentMonth = pagamentos.reduce((sum: number, p: PagamentoRow) => sum + Number(p.valor ?? 0), 0);
   const goal = 22000;
   const percent = Math.round((currentMonth / goal) * 100);
 

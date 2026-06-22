@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listarConsentimentos, listarTermosUsuario } from "../controllers/lgpd.admin.controller";
+import { listarConsentimentos, listarTermosUsuario } from "../controllers/lgpd.admin.controller.js";
 
 function isAdmin(req: any, res: any, next: any) {
   if (!req.user || req.user.tipo !== "ADMIN")

@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma.js";
 
 export const listarPorUsuario = async (req: Request, res: Response) => {
   try {
-    const nome = req.params.nome; // veio na URL
+    const nome = req.params.nome as string; // veio na URL
     if (!nome) return res.status(400).json({ error: "Nome não informado" });
 
     const prontuarios = await prisma.prontuario.findMany({

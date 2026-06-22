@@ -4,7 +4,7 @@
 // ============================================================
 
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 // ------------------------------------------------------------
 // Helper: busca profissional por nome (case-insensitive)
@@ -31,7 +31,7 @@ async function buscarProfissionalPorNome(userNome: string) {
 
 export async function listarHorariosPorNome(req: Request, res: Response) {
   try {
-    const userNome = req.params.userNome;
+    const userNome = req.params.userNome as string;
 
     if (!userNome) {
       return res.status(400).json({
@@ -70,7 +70,7 @@ export async function listarHorariosPorNome(req: Request, res: Response) {
 
 export async function criarHorarioPorNome(req: Request, res: Response) {
   try {
-    const userNome = req.params.userNome;
+    const userNome = req.params.userNome as string;
 
     if (!userNome) {
       return res.status(400).json({
@@ -131,7 +131,7 @@ export async function criarHorarioPorNome(req: Request, res: Response) {
 
 export async function atualizarHorarioPorNome(req: Request, res: Response) {
   try {
-    const userNome = req.params.userNome;
+    const userNome = req.params.userNome as string;
 
     if (!userNome) {
       return res.status(400).json({
@@ -191,7 +191,7 @@ export async function atualizarHorarioPorNome(req: Request, res: Response) {
 
 export async function deletarHorarioPorNome(req: Request, res: Response) {
   try {
-    const userNome = req.params.userNome;
+    const userNome = req.params.userNome as string;
 
     if (!userNome) {
       return res.status(400).json({

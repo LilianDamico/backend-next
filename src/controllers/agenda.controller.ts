@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prisma.js";
 
 // =======================================================
 //  1️⃣ BUSCAR PROFISSIONAIS POR NOME
@@ -43,7 +43,7 @@ export async function buscarProfissionaisPorNome(req: Request, res: Response) {
 //  2️⃣ LISTAR HORÁRIOS DISPONÍVEIS PELO NOME DO PROFISSIONAL
 // =======================================================
 export async function listarHorariosPorNome(req: Request, res: Response) {
-  const { nome } = req.params;
+  const { nome } = req.params as Record<string, string>;
 
   try {
     const profissional = await prisma.user.findFirst({
