@@ -67,7 +67,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const user = await prisma.user.findFirst({
-      where: { OR: [{ email: login }, { cpf: login }] },
+      where: { OR: [{ email: login }, { cpf: login }], deletado: false },
     });
 
     if (!user) {

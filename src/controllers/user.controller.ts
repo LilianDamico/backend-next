@@ -14,8 +14,8 @@ function getUserFromToken(req: Request): { id: string; role?: string } | null {
   if (!token) return null;
 
   try {
-    const secret = process.env.JWT_SECRET || "secret";
-    const decoded = jwt.verify(token, secret) as any;
+    if (!process.env.JWT_SECRET) return null;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
     return { id: decoded.id as string, role: decoded.role };
   } catch {
     return null;
@@ -42,6 +42,10 @@ export async function criarUsuario(req: Request, res: Response) {
 
     if (!nome || !email || !senha || !cpf || !tipo) {
       return res.status(400).json({ error: "Campos obrigatórios ausentes." });
+    }
+
+    if (!["CLIENTE", "PROFISSIONAL"].includes(tipo)) {
+      return res.status(400).json({ error: "Tipo inválido. Permitido: CLIENTE ou PROFISSIONAL." });
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
@@ -207,8 +211,8 @@ export async function deletarUsuario(req: Request, res: Response) {
   const { id } = req.params as Record<string, string>;
 
   try {
-    await prisma.user.delete({ where: { id } });
-    return res.json({ message: "Usuário excluído com sucesso." });
+    await prisma.user.update({ where: { id }, data: { deletado: true } });
+    return res.json({ message: "Usuário desativado com sucesso." });
   } catch (error) {
     console.error("Erro ao deletar usuário:", error);
     return res.status(500).json({ error: "Erro ao deletar usuário." });

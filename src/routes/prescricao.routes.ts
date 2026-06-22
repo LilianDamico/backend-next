@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
+import { permitirRoles } from "../middleware/roleMiddleware.js";
 import {
   criarPrescricao,
   listarPrescricoesPorNomePaciente,
@@ -7,14 +9,9 @@ import {
 
 const router = Router();
 
-// Criar nova prescrição
-router.post("/", criarPrescricao);
-
-// Buscar por nome do paciente
-router.get("/paciente/:nome", listarPrescricoesPorNomePaciente);
-
-// Buscar por nome do profissional
-router.get("/profissional/:nome", listarPrescricoesPorNomeProfissional);
+router.post("/", autenticarJWT, permitirRoles("PROFISSIONAL"), criarPrescricao);
+router.get("/paciente/:nome", autenticarJWT, permitirRoles("ADMIN", "PROFISSIONAL"), listarPrescricoesPorNomePaciente);
+router.get("/profissional/:nome", autenticarJWT, permitirRoles("ADMIN", "PROFISSIONAL"), listarPrescricoesPorNomeProfissional);
 
 export default router;
 

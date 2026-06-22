@@ -1,5 +1,7 @@
 // src/routes/profissional.routes.ts
 import { Router } from "express";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
+import { permitirRoles } from "../middleware/roleMiddleware.js";
 
 import {
   getPerfilProfissional,
@@ -17,19 +19,19 @@ const router = Router();
    ============================================================ */
 
 // Perfil
-router.get("/perfil", getPerfilProfissional);
-router.put("/perfil", atualizarPerfilProfissional);
+router.get("/perfil", autenticarJWT, permitirRoles("PROFISSIONAL"), getPerfilProfissional);
+router.put("/perfil", autenticarJWT, permitirRoles("PROFISSIONAL"), atualizarPerfilProfissional);
 
 // Horários
-router.get("/horarios", listarHorariosDoProfissional);
-router.post("/horarios", criarOuAtualizarHorario);
+router.get("/horarios", autenticarJWT, permitirRoles("PROFISSIONAL"), listarHorariosDoProfissional);
+router.post("/horarios", autenticarJWT, permitirRoles("PROFISSIONAL"), criarOuAtualizarHorario);
 
 // Consultas do profissional
-router.get("/consultas", listarConsultasAgendadas);
+router.get("/consultas", autenticarJWT, permitirRoles("PROFISSIONAL"), listarConsultasAgendadas);
 
 /* ============================================================
    ROTA SEARCH (CLIENTE → BUSCAR PROFISSIONAL POR NOME)
    ============================================================ */
-router.get("/buscar", buscarProfissionais);
+router.get("/buscar", autenticarJWT, buscarProfissionais);
 
 export default router;

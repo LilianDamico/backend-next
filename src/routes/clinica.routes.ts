@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
+import { permitirRoles } from "../middleware/roleMiddleware.js";
 import {
   getClinicas,
   createClinica,
@@ -7,6 +9,6 @@ import {
 const router = Router();
 
 router.get("/", getClinicas);
-router.post("/", createClinica);
+router.post("/", autenticarJWT, permitirRoles("ADMIN"), createClinica);
 
 export default router;

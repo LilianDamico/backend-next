@@ -287,18 +287,21 @@ describe("user.controller", () => {
       jest.clearAllMocks();
     });
 
-    it("deve retornar 200 quando o usuário for deletado com sucesso", async () => {
+    it("deve retornar 200 quando o usuário for desativado com sucesso (soft delete)", async () => {
       const req = mockReq({ params: { id: "user-1" } });
       const res = mockRes();
 
-      (mockUser.delete as any).mockResolvedValue({ id: "user-1" });
+      (mockUser.update as any).mockResolvedValue({ id: "user-1", deletado: true });
 
       await deletarUsuario(req, res);
 
-      expect(mockUser.delete).toHaveBeenCalledWith({ where: { id: "user-1" } });
+      expect(mockUser.update).toHaveBeenCalledWith({
+        where: { id: "user-1" },
+        data: { deletado: true },
+      });
       expect((res.status as jest.Mock).mock.calls[0]?.[0] ?? 200).toBe(200);
       expect(res.json).toHaveBeenCalledWith({
-        message: "Usuário excluído com sucesso.",
+        message: "Usuário desativado com sucesso.",
       });
     });
 
@@ -306,7 +309,7 @@ describe("user.controller", () => {
       const req = mockReq({ params: { id: "user-1" } });
       const res = mockRes();
 
-      (mockUser.delete as any).mockRejectedValue(new Error("falha"));
+      (mockUser.update as any).mockRejectedValue(new Error("falha"));
 
       await deletarUsuario(req, res);
 

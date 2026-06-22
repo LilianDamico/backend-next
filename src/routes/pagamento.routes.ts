@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { autenticarJWT } from "../middleware/authMiddleware.js";
+import { permitirRoles } from "../middleware/roleMiddleware.js";
 import {
   getPagamentos,
   createPagamento,
@@ -6,7 +8,7 @@ import {
 
 const router = Router();
 
-router.get("/", getPagamentos);
-router.post("/", createPagamento);
+router.get("/", autenticarJWT, permitirRoles("ADMIN"), getPagamentos);
+router.post("/", autenticarJWT, permitirRoles("ADMIN", "PROFISSIONAL"), createPagamento);
 
 export default router;

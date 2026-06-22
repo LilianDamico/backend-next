@@ -176,7 +176,7 @@ describe("auth.controller", () => {
       await login(req, res);
 
       expect(mockUser.findFirst).toHaveBeenCalledWith({
-        where: { OR: [{ email: "maria@email.com" }, { cpf: "maria@email.com" }] },
+        where: { OR: [{ email: "maria@email.com" }, { cpf: "maria@email.com" }], deletado: false },
       });
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ error: "Usuário não encontrado." });
